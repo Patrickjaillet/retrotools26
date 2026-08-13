@@ -19,6 +19,13 @@ pub struct GameMedia {
     pub screenshot_url: Option<String>,
     pub video_url: Option<String>,
     pub wheel_url: Option<String>,
+    /// First genre reported by ScreenScraper, if any — feeds the dynamic
+    /// genre-based collections in `retrotools-plugin-playlists` (Phase 13).
+    pub genre: Option<String>,
+    /// Release year as a plain 4-digit string (ScreenScraper reports full
+    /// dates; only the year is kept, matching what a genre/year collection
+    /// needs).
+    pub release_year: Option<String>,
 }
 
 impl GameMedia {
@@ -109,6 +116,27 @@ fn parse_game_media(json: &serde_json::Value) -> GameMedia {
             }
         }
     }
+
+    media.genre = jeu["genres"]
+        .as_array()
+        .and_then(|genres| genres.first())
+        .and_then(|g| {
+            g["noms"]
+                .as_array()
+                .and_then(|names| names.first())
+                .and_then(|n| n["text"].as_str())
+                .or_else(|| g["nomcourt"].as_str())
+        })
+        .map(|s| s.to_string());
+
+    media.release_year = jeu["dates"]
+        .as_array()
+        .and_then(|dates| dates.first())
+        .and_then(|d| d["text"].as_str())
+        .and_then(|text| text.get(0..4))
+        .filter(|year| year.chars().all(|c| c.is_ascii_digit()))
+        .map(|s| s.to_string());
+
     media
 }
 
@@ -179,6 +207,25 @@ mod tests {
         assert_eq!(media.screenshot_url.as_deref(), Some("https://example.com/screenshot.png"));
         assert_eq!(media.video_url.as_deref(), Some("https://example.com/video.mp4"));
         assert_eq!(media.wheel_url.as_deref(), Some("https://example.com/wheel.png"));
+    }
+
+    #[test]
+    fn parses_genre_and_release_year_when_present() {
+        let body = r#"{
+            "response": {
+                "jeu": {
+                    "noms": [{"region": "wor", "text": "Super Test Game"}],
+                    "genres": [{"noms": [{"langue": "en", "text": "Platform"}]}],
+                    "dates": [{"region": "us", "text": "1991-07-14"}],
+                    "medias": []
+                }
+            }
+        }"#;
+        let base_url = serve_once("200 OK", body);
+        let client = ScreenScraperClient::with_base_url(base_url);
+        let media = client.fetch_game_media(&creds(), "12345678").unwrap().unwrap();
+        assert_eq!(media.genre.as_deref(), Some("Platform"));
+        assert_eq!(media.release_year.as_deref(), Some("1991"));
     }
 
     #[test]

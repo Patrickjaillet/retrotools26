@@ -1,11 +1,17 @@
 /// One `<game>` entry to add/update in a `gamelist.xml`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct GamelistEntry {
     pub rom_path: String,
     pub name: String,
     pub image: Option<String>,
     pub video: Option<String>,
     pub marquee: Option<String>,
+    /// Written as ES-DE's `<genre>` tag — read back by
+    /// `retrotools-plugin-playlists`' dynamic genre collections (Phase 13).
+    pub genre: Option<String>,
+    /// Written as ES-DE's `<releasedate>` tag (year only, e.g. `1991`) —
+    /// read back by the dynamic year collections (Phase 13).
+    pub release_year: Option<String>,
 }
 
 fn xml_escape(text: &str) -> String {
@@ -25,6 +31,12 @@ fn entry_fragment(entry: &GamelistEntry) -> String {
     }
     if let Some(marquee) = &entry.marquee {
         fragment.push_str(&format!("    <marquee>{}</marquee>\n", xml_escape(marquee)));
+    }
+    if let Some(genre) = &entry.genre {
+        fragment.push_str(&format!("    <genre>{}</genre>\n", xml_escape(genre)));
+    }
+    if let Some(year) = &entry.release_year {
+        fragment.push_str(&format!("    <releasedate>{}</releasedate>\n", xml_escape(year)));
     }
     fragment.push_str("  </game>\n");
     fragment
@@ -72,8 +84,7 @@ mod tests {
             rom_path: path.to_string(),
             name: name.to_string(),
             image: Some(format!("media/{name}-box.png")),
-            video: None,
-            marquee: None,
+            ..Default::default()
         }
     }
 
@@ -110,6 +121,16 @@ mod tests {
         assert!(merged.contains("Hand Edited"));
         assert!(merged.contains("My own notes"));
         assert!(merged.contains("Scraped Game"));
+    }
+
+    #[test]
+    fn genre_and_release_year_are_written_when_present() {
+        let mut e = entry("./a.zip", "Game A");
+        e.genre = Some("Platform".to_string());
+        e.release_year = Some("1991".to_string());
+        let result = merge_entry("", &e);
+        assert!(result.contains("<genre>Platform</genre>"));
+        assert!(result.contains("<releasedate>1991</releasedate>"));
     }
 
     #[test]

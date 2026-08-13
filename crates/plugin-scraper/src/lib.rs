@@ -147,9 +147,9 @@ impl Plugin for ScraperPlugin {
             let mut entry = GamelistEntry {
                 rom_path: format!("./{}", game.roms.first().map(|r| r.name.as_str()).unwrap_or(&game.name)),
                 name: media.name.clone().unwrap_or_else(|| game.name.clone()),
-                image: None,
-                video: None,
-                marquee: None,
+                genre: media.genre.clone(),
+                release_year: media.release_year.clone(),
+                ..Default::default()
             };
 
             for (kind, url) in media.media_urls() {

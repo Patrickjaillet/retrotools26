@@ -1188,6 +1188,7 @@ fn run_status_command(roms_root: PathBuf, dat_dir: PathBuf, no_cache: bool) {
 fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     let mut registry = retrotools_plugin_api::PluginRegistry::new();
     registry.register(Box::new(retrotools_plugin_playlists::PlaylistPlugin));
+    registry.register(Box::new(retrotools_plugin_playlists::CollectionsPlugin));
     registry.register(Box::new(retrotools_plugin_bios::BiosPlugin));
     registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
         distro: retrotools_plugin_batocera_export::Distro::Batocera,

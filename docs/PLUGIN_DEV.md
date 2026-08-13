@@ -175,6 +175,15 @@ want needs one.
   client (`base_url` overridable, same test seam as `GitHubReleaseSource` in
   `retrotools_common::updater`) and a size-limited local media cache.
 
+- **`retrotools-plugin-playlists::CollectionsPlugin`** (`crates/plugin-playlists`,
+  id `es-de-collections`) — a good example of two plugins from different
+  crates cooperating through a plain file on disk rather than a shared Rust
+  type: it reads the `gamelist.xml` `retrotools-plugin-scraper` writes (if
+  present in the same `output_dir`) to build genre/year collections, with a
+  clean fallback when that file doesn't exist. Also demonstrates a
+  never-delete merge strategy (`merge_collection_lines`) for output a user
+  might hand-edit.
+
 ### The Batocera/Recalbox/Lakka system table
 
 `retrotools-plugin-batocera-export` ships a small built-in table mapping
