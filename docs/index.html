@@ -223,6 +223,43 @@
     display:block;
     border-radius:6px;
     border:1px solid #2a2350;
+    cursor:zoom-in;
+    transition:opacity 0.15s ease;
+  }
+  .crt-frame img:hover{ opacity:0.88; }
+
+  .lightbox{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:5vh 5vw;
+    background:rgba(6,4,16,0.92);
+    backdrop-filter:blur(4px);
+    cursor:zoom-out;
+  }
+  .lightbox.open{ display:flex; }
+  .lightbox img{
+    max-width:92vw;
+    max-height:88vh;
+    border-radius:8px;
+    border:1px solid var(--panel-border);
+    box-shadow:0 0 60px rgba(56,244,255,0.25);
+  }
+  .lightbox-close{
+    position:fixed;
+    top:22px;
+    right:28px;
+    font-family:'Press Start 2P',monospace;
+    font-size:14px;
+    color:var(--text);
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:10px 14px;
+    cursor:pointer;
   }
   .crt-frame figcaption{
     text-align:center;
@@ -376,13 +413,13 @@
     <div class="shots">
       <figure class="crt-frame">
         <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-        <img src="screenshot1.png" alt="Retro Tools 2026 dashboard showing tracked platforms and collection stats" loading="lazy">
-        <figcaption>Your collection, at a glance</figcaption>
+        <img src="screenshot1.png" alt="Retro Tools 2026 dashboard showing tracked platforms and collection stats" loading="lazy" onclick="openLightbox(this.src, this.alt)">
+        <figcaption>Your collection, at a glance · click to enlarge</figcaption>
       </figure>
       <figure class="crt-frame">
         <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-        <img src="screenshot2.png" alt="1G1R builder screen with scan, rules, preview and build steps" loading="lazy">
-        <figcaption>Build a set, step by step</figcaption>
+        <img src="screenshot2.png" alt="1G1R builder screen with scan, rules, preview and build steps" loading="lazy" onclick="openLightbox(this.src, this.alt)">
+        <figcaption>Build a set, step by step · click to enlarge</figcaption>
       </figure>
     </div>
   </section>
@@ -423,7 +460,28 @@
   </footer>
 </main>
 
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox(event)">✕ CLOSE</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script>
+function openLightbox(src, alt) {
+  var lb = document.getElementById('lightbox');
+  var img = document.getElementById('lightbox-img');
+  img.src = src;
+  img.alt = alt || '';
+  lb.classList.add('open');
+}
+function closeLightbox(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('lightbox').classList.remove('open');
+}
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeLightbox();
+});
+</script>
 <script>
 (function(){
   var canvas = document.getElementById('bg-canvas');
@@ -432,56 +490,156 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   var scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a0714, 0.055);
+  scene.fog = new THREE.FogExp2(0x05040c, 0.05);
 
-  var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
-  camera.position.set(0, 2.4, 7);
-  camera.lookAt(0, 1.2, -10);
+  var camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 6.5, 8.5);
 
-  // Synthwave sun: layered glowing rings
-  var sunGroup = new THREE.Group();
-  var sunColors = [0xff3ec8, 0xff6fb0, 0xffb238];
-  for (var i = 0; i < 3; i++) {
-    var ring = new THREE.Mesh(
-      new THREE.RingGeometry(2.6 - i * 0.35, 2.9 - i * 0.35, 64),
-      new THREE.MeshBasicMaterial({ color: sunColors[i], transparent: true, opacity: 0.35 - i * 0.08, side: THREE.DoubleSide })
-    );
-    sunGroup.add(ring);
+  var FLOOR_Y = -1.2;
+  var HALF_W = 11;      // maze half-width (x)
+  var NEAR_Z = -6;       // near edge of maze (closest to camera)
+  var FAR_Z = -46;       // far edge of maze (into the distance)
+
+  // ---- Maze walls: blue neon corridor outlines ------------------------
+  var wallMat = new THREE.LineBasicMaterial({ color: 0x2a6bff, transparent: true, opacity: 0.85 });
+  var wallGroup = new THREE.Group();
+
+  function addWall(x0, z0, x1, z1) {
+    var geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x0, FLOOR_Y, z0),
+      new THREE.Vector3(x1, FLOOR_Y, z1)
+    ]);
+    wallGroup.add(new THREE.Line(geo, wallMat));
   }
-  var sunCore = new THREE.Mesh(
-    new THREE.CircleGeometry(2.3, 64),
-    new THREE.MeshBasicMaterial({ color: 0xffb238, transparent: true, opacity: 0.18 })
-  );
-  sunGroup.add(sunCore);
-  sunGroup.position.set(0, 3.2, -22);
-  scene.add(sunGroup);
 
-  // Grid floor, receding to the horizon
-  var grid = new THREE.GridHelper(60, 40, 0x38f4ff, 0xff3ec8);
-  grid.material.transparent = true;
-  grid.material.opacity = 0.35;
-  grid.position.set(0, -1.2, -10);
-  scene.add(grid);
+  // Outer boundary
+  addWall(-HALF_W, NEAR_Z, HALF_W, NEAR_Z);
+  addWall(-HALF_W, FAR_Z, HALF_W, FAR_Z);
+  addWall(-HALF_W, NEAR_Z, -HALF_W, FAR_Z);
+  addWall(HALF_W, NEAR_Z, HALF_W, FAR_Z);
 
-  var grid2 = new THREE.GridHelper(60, 40, 0x38f4ff, 0x38f4ff);
-  grid2.material.transparent = true;
-  grid2.material.opacity = 0.12;
-  grid2.position.set(0, -1.19, -10);
-  scene.add(grid2);
-
-  // Drifting particles ("stars")
-  var starCount = 260;
-  var starGeo = new THREE.BufferGeometry();
-  var starPos = new Float32Array(starCount * 3);
-  for (var s = 0; s < starCount; s++) {
-    starPos[s * 3] = (Math.random() - 0.5) * 60;
-    starPos[s * 3 + 1] = Math.random() * 22 - 2;
-    starPos[s * 3 + 2] = -Math.random() * 70;
+  // Inner maze bars: rows of short perpendicular walls, alternating sides,
+  // reminiscent of arcade-maze corridors without needing a real solver.
+  var rows = 9;
+  for (var r = 0; r < rows; r++) {
+    var z = NEAR_Z + (r + 1) * ((FAR_Z - NEAR_Z) / (rows + 1));
+    var fromLeft = r % 2 === 0;
+    var barLen = HALF_W * 1.15;
+    if (fromLeft) {
+      addWall(-HALF_W, z, -HALF_W + barLen, z);
+    } else {
+      addWall(HALF_W, z, HALF_W - barLen, z);
+    }
+    // a couple of short vertical stubs for corridor texture
+    addWall(fromLeft ? -HALF_W + barLen : HALF_W - barLen, z, fromLeft ? -HALF_W + barLen : HALF_W - barLen, z - 1.6);
   }
-  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-  var starMat = new THREE.PointsMaterial({ color: 0xeae6ff, size: 0.06, transparent: true, opacity: 0.7 });
-  var stars = new THREE.Points(starGeo, starMat);
-  scene.add(stars);
+  scene.add(wallGroup);
+
+  // ---- Pac-dots ---------------------------------------------------------
+  var dotGeo = new THREE.SphereGeometry(0.09, 8, 8);
+  var dotMat = new THREE.MeshBasicMaterial({ color: 0xffe066, fog: false });
+  var dots = [];
+  var DOT_COLS = 9, DOT_ROWS = 26;
+  for (var dr = 0; dr < DOT_ROWS; dr++) {
+    for (var dc = 0; dc < DOT_COLS; dc++) {
+      var dx = -HALF_W + 1.2 + dc * ((HALF_W * 2 - 2.4) / (DOT_COLS - 1));
+      var dz = NEAR_Z - 1 + dr * ((FAR_Z - NEAR_Z + 2) / (DOT_ROWS - 1));
+      var mesh = new THREE.Mesh(dotGeo, dotMat);
+      mesh.position.set(dx, FLOOR_Y + 0.1, dz);
+      scene.add(mesh);
+      dots.push({ mesh: mesh, x: dx, z: dz, eaten: 0 });
+    }
+  }
+
+  // ---- Pac-Man ------------------------------------------------------
+  function pacmanGeometry(mouthDeg) {
+    var shape = new THREE.Shape();
+    var r = 0.55;
+    var half = THREE.MathUtils.degToRad(mouthDeg) / 2;
+    shape.moveTo(0, 0);
+    shape.absarc(0, 0, r, half, Math.PI * 2 - half, false);
+    shape.lineTo(0, 0);
+    return new THREE.ShapeGeometry(shape, 24);
+  }
+  var pacFrames = [];
+  for (var pf = 0; pf <= 8; pf++) {
+    pacFrames.push(pacmanGeometry(Math.abs(4 - pf) * 11 + 4)); // 4..40..4 deg mouth
+  }
+  var pacMat = new THREE.MeshBasicMaterial({ color: 0xffe066, side: THREE.DoubleSide, fog: false });
+  var pacman = new THREE.Mesh(pacFrames[0], pacMat);
+  pacman.position.y = FLOOR_Y + 0.75;
+  scene.add(pacman);
+
+  // ---- Ghosts -------------------------------------------------------
+  function ghostGeometry() {
+    var s = new THREE.Shape();
+    var r = 0.5;
+    s.moveTo(-r, 0);
+    s.absarc(0, 0, r, Math.PI, 0, false);
+    var bottom = -r * 0.85;
+    s.lineTo(r, bottom);
+    var bumps = 4, w = (2 * r) / bumps;
+    for (var i = 0; i < bumps; i++) {
+      var x0 = r - w * i;
+      var xm = x0 - w / 2;
+      var x1 = x0 - w;
+      s.quadraticCurveTo(xm, bottom - (i % 2 === 0 ? 0.12 : 0), x1, bottom);
+    }
+    s.lineTo(-r, 0);
+    return new THREE.ShapeGeometry(s, 16);
+  }
+  var ghostGeo = ghostGeometry();
+  var eyeGeo = new THREE.CircleGeometry(0.09, 12);
+  var pupilGeo = new THREE.CircleGeometry(0.045, 10);
+  var eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+  var pupilMat = new THREE.MeshBasicMaterial({ color: 0x14102a, fog: false });
+
+  function makeGhost(color) {
+    var g = new THREE.Group();
+    var body = new THREE.Mesh(ghostGeo, new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, fog: false }));
+    g.add(body);
+    [-0.18, 0.18].forEach(function (ex) {
+      var eye = new THREE.Mesh(eyeGeo, eyeMat);
+      eye.position.set(ex, 0.08, 0.01);
+      var pupil = new THREE.Mesh(pupilGeo, pupilMat);
+      pupil.position.set(0.02, 0, 0.01);
+      eye.add(pupil);
+      g.add(eye);
+    });
+    g.position.y = FLOOR_Y + 0.7;
+    scene.add(g);
+    return g;
+  }
+  var ghosts = [makeGhost(0xff3b3b), makeGhost(0xff9bd8), makeGhost(0x38f4ff)];
+
+  // ---- Path: a rounded loop around the maze --------------------------
+  var pathPoints = [
+    new THREE.Vector2(-HALF_W + 1.5, NEAR_Z - 1),
+    new THREE.Vector2(HALF_W - 1.5, NEAR_Z - 1),
+    new THREE.Vector2(HALF_W - 1.5, FAR_Z + 1),
+    new THREE.Vector2(-HALF_W + 1.5, FAR_Z + 1)
+  ];
+  var segLens = [];
+  var totalLen = 0;
+  for (var pi = 0; pi < pathPoints.length; pi++) {
+    var a = pathPoints[pi], b = pathPoints[(pi + 1) % pathPoints.length];
+    var len = a.distanceTo(b);
+    segLens.push(len);
+    totalLen += len;
+  }
+
+  function pointOnPath(t) {
+    var dist = ((t % 1) + 1) % 1 * totalLen;
+    for (var i = 0; i < pathPoints.length; i++) {
+      if (dist <= segLens[i]) {
+        var a = pathPoints[i], b = pathPoints[(i + 1) % pathPoints.length];
+        var f = segLens[i] === 0 ? 0 : dist / segLens[i];
+        return { x: a.x + (b.x - a.x) * f, z: a.y + (b.y - a.y) * f, dx: b.x - a.x, dz: b.y - a.y };
+      }
+      dist -= segLens[i];
+    }
+    return { x: pathPoints[0].x, z: pathPoints[0].y, dx: 1, dz: 0 };
+  }
 
   function onResize() {
     var w = window.innerWidth, h = window.innerHeight;
@@ -491,21 +649,49 @@
   }
   window.addEventListener('resize', onResize);
 
+  var SPEED = 0.018; // loops per second
   var clock = new THREE.Clock();
   function animate() {
     requestAnimationFrame(animate);
     var t = clock.getElapsedTime();
 
-    grid.position.z = -10 + ((t * 2.2) % 3);
-    grid2.position.z = grid.position.z;
+    var pacT = t * SPEED;
+    var p = pointOnPath(pacT);
+    pacman.position.x = p.x;
+    pacman.position.z = p.z;
+    // Billboard sprite facing the camera; mirror horizontally so the mouth
+    // (which opens toward local +X) points the way pac-man is travelling.
+    if (Math.abs(p.dx) > 0.001) pacman.scale.x = p.dx < 0 ? -1 : 1;
+    var cyclePos = Math.floor(t * 9) % 16;
+    var frame = cyclePos <= 8 ? cyclePos : 16 - cyclePos;
+    pacman.geometry = pacFrames[frame];
 
-    sunGroup.rotation.z = t * 0.05;
-    sunGroup.position.y = 3.2 + Math.sin(t * 0.3) * 0.15;
+    var ghostOffsets = [-0.05, -0.095, -0.14];
+    for (var gi = 0; gi < ghosts.length; gi++) {
+      var gp = pointOnPath(pacT + ghostOffsets[gi]);
+      ghosts[gi].position.x = gp.x;
+      ghosts[gi].position.z = gp.z;
+      ghosts[gi].position.y = FLOOR_Y + 0.7 + Math.sin(t * 3 + gi) * 0.05;
+      if (Math.abs(gp.dx) > 0.001) ghosts[gi].scale.x = gp.dx < 0 ? -1 : 1;
+    }
 
-    stars.rotation.y = t * 0.01;
+    // Eat dots within range, respawn after they've been passed for a while
+    for (var di = 0; di < dots.length; di++) {
+      var d = dots[di];
+      if (!d.eaten) {
+        var dx = d.x - pacman.position.x, dz = d.z - pacman.position.z;
+        if (dx * dx + dz * dz < 0.6) {
+          d.mesh.visible = false;
+          d.eaten = t;
+        }
+      } else if (t - d.eaten > 6) {
+        d.mesh.visible = true;
+        d.eaten = 0;
+      }
+    }
 
-    camera.position.x = Math.sin(t * 0.08) * 0.6;
-    camera.lookAt(0, 1.2, -10);
+    camera.position.x = Math.sin(t * 0.06) * 1.2;
+    camera.lookAt(0, FLOOR_Y, (NEAR_Z + FAR_Z) / 2);
 
     renderer.render(scene, camera);
   }
