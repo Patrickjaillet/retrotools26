@@ -1205,6 +1205,7 @@ fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_scraper::ScraperPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
+    registry.register(Box::new(retrotools_plugin_core_advisor::CoreAdvisorPlugin));
     registry
 }
 

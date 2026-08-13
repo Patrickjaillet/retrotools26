@@ -29,6 +29,7 @@ fn default_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_scraper::ScraperPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
+    registry.register(Box::new(retrotools_plugin_core_advisor::CoreAdvisorPlugin));
     registry
 }
 
@@ -170,6 +171,7 @@ pub struct AppState {
     pub shader_new_content_dir: String,
     pub shader_new_game: String,
     pub shader_new_preset: String,
+    pub core_advisor_db: Vec<retrotools_plugin_core_advisor::CoreEntry>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -280,6 +282,7 @@ impl AppState {
             shader_new_content_dir: String::new(),
             shader_new_game: String::new(),
             shader_new_preset: String::new(),
+            core_advisor_db: retrotools_plugin_core_advisor::load_database().unwrap_or_default(),
         }
     }
 
@@ -382,6 +385,16 @@ impl AppState {
         match retrotools_plugin_shaders::save_associations(&updated) {
             Ok(()) => self.shader_associations = updated,
             Err(err) => self.toast(ToastKind::Error, format!("Cannot save shader associations: {err}")),
+        }
+    }
+
+    pub fn import_core_advisor_database(&mut self, path: &std::path::Path) {
+        match retrotools_plugin_core_advisor::import_database_file(path) {
+            Ok(count) => {
+                self.core_advisor_db = retrotools_plugin_core_advisor::load_database().unwrap_or_default();
+                self.toast(ToastKind::Success, format!("Imported {count} core recommendation(s)"));
+            }
+            Err(err) => self.toast(ToastKind::Error, format!("Cannot import core database: {err}")),
         }
     }
 

@@ -316,6 +316,18 @@ fn show_details(ui: &mut Ui, state: &AppState, gameset: &retrotools_core::GameSe
             ui.label(RichText::new("Tags").weak());
             ui.label(tags_summary(game));
             ui.end_row();
+
+            if let Some(rec) = retrotools_plugin_core_advisor::find_recommendation(&state.core_advisor_db, &gameset.platform, &game.name) {
+                ui.label(RichText::new("Recommended core").weak());
+                let flag = if rec.known_problematic { " ⚠ known problematic" } else { "" };
+                ui.label(format!("{} ({} confidence){flag}", rec.core, rec.confidence));
+                ui.end_row();
+                if !rec.note.is_empty() {
+                    ui.label(RichText::new("Core note").weak());
+                    ui.label(&rec.note);
+                    ui.end_row();
+                }
+            }
         });
 
     ui.add_space(12.0);

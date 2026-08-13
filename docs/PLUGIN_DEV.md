@@ -213,6 +213,43 @@ JSON the first time it's needed
 slugified fallback folder name, clearly flagged in the outcome message)
 rather than failing outright.
 
+- **`retrotools-plugin-core-advisor`** (`crates/plugin-core-advisor`) —
+  `core-advisor-report`. A good example of a plugin that needs
+  `ctx.match_report` (it refuses to run without one — "run a scan first",
+  it never re-scans on its own): it cross-references the games the last
+  scan actually matched against a local, user-imported JSON database
+  (`plugin_data_dir_path("core-advisor")/database.json`, editable from
+  Settings → "Import core database file...") of platform/game → recommended
+  libretro core, writes a plain-text report, and generates a per-game
+  `.opt` core-options override at the exact path RetroArch expects
+  (`<core>/<game>.opt`) for any entry that specifies one. The database
+  format is a JSON array of:
+  ```json
+  [
+    {
+      "platform": "Nintendo - Super Nintendo Entertainment System",
+      "game_name": null,
+      "core": "snes9x",
+      "confidence": "Medium",
+      "note": "safe general-purpose default",
+      "known_problematic": false,
+      "core_options": []
+    },
+    {
+      "platform": "Nintendo - Super Nintendo Entertainment System",
+      "game_name": "Super Metroid",
+      "core": "bsnes",
+      "confidence": "High",
+      "note": "needs cycle-accurate timing for a known glitch",
+      "known_problematic": true,
+      "core_options": [["bsnes_hacks", "disabled"]]
+    }
+  ]
+  ```
+  `game_name: null` is a platform-wide default; a row with a specific
+  `game_name` always wins over it. This project doesn't host or query any
+  online service for this community data — the user brings their own file.
+
 ## What's intentionally not shipped yet
 
 `intégration RetroAchievements` from the roadmap is not implemented as a

@@ -3518,6 +3518,7 @@ dependencies = [
  "retrotools-plugin-batocera-export",
  "retrotools-plugin-bios",
  "retrotools-plugin-controllers",
+ "retrotools-plugin-core-advisor",
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",
@@ -3607,6 +3608,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "retrotools-plugin-core-advisor"
+version = "0.1.0"
+dependencies = [
+ "retrotools-common",
+ "retrotools-core",
+ "retrotools-plugin-api",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "retrotools-plugin-playlists"
 version = "0.1.0"
 dependencies = [
@@ -3664,6 +3676,7 @@ dependencies = [
  "retrotools-plugin-batocera-export",
  "retrotools-plugin-bios",
  "retrotools-plugin-controllers",
+ "retrotools-plugin-core-advisor",
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",

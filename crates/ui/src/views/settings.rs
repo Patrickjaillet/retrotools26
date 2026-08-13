@@ -218,6 +218,29 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
     ui.separator();
     ui.add_space(12.0);
 
+    ui.label(RichText::new("Core compatibility database").strong());
+    ui.add_space(4.0);
+    ui.label(
+        RichText::new(
+            "A local, editable database mapping platform/game → recommended libretro core. \
+             This project doesn't host or query any online service for this community data — \
+             import a JSON file you already have (see docs/PLUGIN_DEV.md for the format).",
+        )
+        .weak()
+        .small(),
+    );
+    ui.add_space(6.0);
+    ui.label(format!("{} entrie(s) loaded", state.core_advisor_db.len()));
+    if ui.button("Import core database file...").clicked() {
+        if let Some(path) = rfd::FileDialog::new().add_filter("JSON", &["json"]).pick_file() {
+            state.import_core_advisor_database(&path);
+        }
+    }
+
+    ui.add_space(16.0);
+    ui.separator();
+    ui.add_space(12.0);
+
     ui.label(RichText::new("DAT update sources").strong());
     ui.add_space(4.0);
     ui.label(
