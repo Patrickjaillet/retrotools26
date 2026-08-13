@@ -1,5 +1,5 @@
 [package]
-name = "retrotools-cli"
+name = "retrotools-plugin-saves"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -8,17 +8,9 @@ repository.workspace = true
 homepage.workspace = true
 rust-version.workspace = true
 
-[[bin]]
-name = "retrotools-cli"
-path = "src/main.rs"
-
 [dependencies]
 retrotools-common.workspace = true
 retrotools-core.workspace = true
 retrotools-plugin-api.workspace = true
-retrotools-plugin-playlists.workspace = true
-retrotools-plugin-bios.workspace = true
-retrotools-plugin-batocera-export.workspace = true
-retrotools-plugin-saves.workspace = true
-clap.workspace = true
-tracing.workspace = true
+zip.workspace = true
+chrono.workspace = true

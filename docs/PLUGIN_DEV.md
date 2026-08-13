@@ -145,6 +145,14 @@ want needs one.
   of a plugin honoring `ctx.dry_run` and of one with its own editable data
   file (the platform → system-folder-name table, see below).
 
+- **`retrotools-plugin-saves`** (`crates/plugin-saves`) — `saves-backup`/
+  `saves-restore`. A good example of a plugin that opens its own
+  `retrotools_core::UndoLog` (the same database file the rest of the app
+  uses, via `retrotools_common::config::undo_log_file_path`) so its actions
+  show up in the same undo history as everything else, and reuses
+  `fileops::safe_delete` instead of reimplementing "move the old file out of
+  the way before overwriting it".
+
 ### The Batocera/Recalbox/Lakka system table
 
 `retrotools-plugin-batocera-export` ships a small built-in table mapping

@@ -9,6 +9,7 @@ members = [
     "crates/plugin-playlists",
     "crates/plugin-bios",
     "crates/plugin-batocera-export",
+    "crates/plugin-saves",
 ]
 
 [workspace.package]
@@ -27,6 +28,7 @@ retrotools-plugin-api = { path = "crates/plugin-api" }
 retrotools-plugin-playlists = { path = "crates/plugin-playlists" }
 retrotools-plugin-bios = { path = "crates/plugin-bios" }
 retrotools-plugin-batocera-export = { path = "crates/plugin-batocera-export" }
+retrotools-plugin-saves = { path = "crates/plugin-saves" }
 thiserror = "1.0"
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
