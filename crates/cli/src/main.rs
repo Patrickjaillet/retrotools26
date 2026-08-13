@@ -1203,6 +1203,8 @@ fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_saves::SavesRestorePlugin));
     registry.register(Box::new(retrotools_plugin_controllers::ControllerExportPlugin));
     registry.register(Box::new(retrotools_plugin_scraper::ScraperPlugin));
+    registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
+    registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
     registry
 }
 
@@ -1286,6 +1288,7 @@ fn run_plugin_command(command: PluginCommands) {
                 source_dir: source.as_deref(),
                 output_dir: &output,
                 dry_run,
+                match_report: None,
             };
 
             match registry.run(&id, &ctx) {

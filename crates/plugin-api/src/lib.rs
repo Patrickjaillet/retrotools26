@@ -1,4 +1,4 @@
-use retrotools_core::GameSet;
+use retrotools_core::{GameSet, MatchReport};
 use std::path::{Path, PathBuf};
 
 /// Everything a plugin needs to do its work, handed to it by the host
@@ -17,6 +17,13 @@ pub struct PluginContext<'a> {
     pub source_dir: Option<&'a Path>,
     /// Where the plugin should write anything it produces.
     pub output_dir: &'a Path,
+    /// The most recent scan/match result for the active platform, if a scan
+    /// has been run. `None` when no scan has happened yet (or the caller
+    /// has nothing meaningful to share — e.g. a CLI invocation that only
+    /// parsed a DAT without scanning ROMs). Lets a plugin cross-reference
+    /// per-ROM status (matched/corrupt/unknown/missing) without needing to
+    /// re-scan or re-hash anything itself.
+    pub match_report: Option<&'a MatchReport>,
     /// When true, a plugin must compute and report what it *would* do
     /// (in `PluginOutcome.summary`) without touching the filesystem —
     /// same contract as `retrotools_core::fileops::execute_build`'s
@@ -127,6 +134,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
 
@@ -145,6 +153,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
         assert!(registry.run("nope", &ctx).is_err());

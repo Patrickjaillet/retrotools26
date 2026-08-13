@@ -36,6 +36,7 @@ pub struct PluginContext<'a> {
     pub kept_game_names: &'a [String],
     pub source_dir: Option<&'a std::path::Path>,
     pub output_dir: &'a std::path::Path,
+    pub match_report: Option<&'a retrotools_core::MatchReport>,
     pub dry_run: bool,
 }
 
@@ -64,6 +65,10 @@ pub trait Plugin: Send + Sync {
   same as a normal `Result::Err`).
 - `run` returns `Err(String)` on failure — that message is shown to the user
   as-is (in a CLI `eprintln!` or a UI toast), so make it actionable.
+- `match_report` is the most recent scan/match result for the active
+  platform, if a scan has been run (`None` otherwise). Lets a plugin
+  cross-reference per-ROM status (matched/corrupt/unknown/missing) without
+  re-scanning or re-hashing anything itself.
 - `dry_run` is set when the caller wants a preview: a plugin whose work is
   destructive (writes/copies/overwrites files) should check it and, when
   true, compute and describe what it *would* do in `PluginOutcome.summary`
@@ -184,6 +189,18 @@ want needs one.
   never-delete merge strategy (`merge_collection_lines`) for output a user
   might hand-edit.
 
+- **`retrotools-plugin-shaders`** (`crates/plugin-shaders`) — `shaders-export`/
+  `shaders-clean`. A good example of two plugin ids sharing state rather than
+  code: `shaders-export` writes RetroArch shader override files (from a
+  library of `.glslp`/`.slangp` presets plus a saved association list, both
+  under `plugin_data_dir_path("shaders")`) and records exactly what it wrote
+  in a manifest (`.retrotools26-generated.json`); `shaders-clean` reads that
+  same manifest to remove only what the tool itself generated, leaving any
+  override file the user wrote by hand untouched. The override file layout
+  (`<core>/<core>.cfg` for a whole core, `<core>/<content dir>/<game>.cfg`
+  for one game) mirrors RetroArch's own override directory structure exactly
+  — no invented format.
+
 ### The Batocera/Recalbox/Lakka system table
 
 `retrotools-plugin-batocera-export` ships a small built-in table mapping
@@ -198,12 +215,10 @@ rather than failing outright.
 
 ## What's intentionally not shipped yet
 
-`gestionnaire de médias/artwork avancé`, `scraper de métadonnées (IGDB,
-ScreenScraper, TheGamesDB)` and `intégration RetroAchievements` from the
-roadmap are not implemented as plugins (or anywhere else): they need
-third-party API keys/accounts this project doesn't have credentials for.
-The `Plugin` trait and registry are ready for them — writing one is exactly
-the process above.
+`intégration RetroAchievements` from the roadmap is not implemented as a
+plugin (or anywhere else): it needs a third-party API key/account this
+project doesn't have credentials for. The `Plugin` trait and registry are
+ready for it — writing one is exactly the process above.
 
 ROM/ISO format conversion *is* implemented (`retrotools_core::convert`,
 `convert to-chd`/`convert from-chd` in the CLI) but lives directly in

@@ -388,6 +388,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
 
@@ -415,6 +416,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
 
@@ -446,6 +448,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
 
@@ -467,6 +470,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: true,
         };
 
@@ -486,6 +490,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
         CollectionsPlugin.run(&ctx).unwrap();
@@ -516,6 +521,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
         let outcome = CollectionsPlugin.run(&ctx).unwrap();
@@ -537,6 +543,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
         let outcome = CollectionsPlugin.run(&ctx).unwrap();

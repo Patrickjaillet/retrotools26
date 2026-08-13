@@ -298,6 +298,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&library),
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         let outcome = ControllerExportPlugin.run(&ctx).unwrap();
@@ -322,6 +323,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&library),
             output_dir: &output,
+            match_report: None,
             dry_run: true,
         };
         let outcome = ControllerExportPlugin.run(&ctx).unwrap();
@@ -342,6 +344,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         let outcome = ControllerExportPlugin.run(&ctx).unwrap();

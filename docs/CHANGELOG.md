@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+- RetroArch shader override generation (`retrotools-plugin-shaders`): a library of `.glslp`/`.slangp` presets (3 realistic starters referencing RetroArch's own bundled shaders, plus import of externally-supplied preset files), a saved shader → core / shader → game association list edited from a new Settings section, and `shaders-export` which writes RetroArch override files at the exact path RetroArch itself expects (`<core>/<core>.cfg` for a whole core, `<core>/<content dir>/<game>.cfg` for one game); every generated file is recorded in a manifest so `shaders-clean` can remove exactly what this tool produced without ever touching a hand-written override
+- `PluginContext` gained a `match_report: Option<&MatchReport>` field so a plugin can cross-reference per-ROM scan status (matched/corrupt/unknown/missing) without re-scanning — needed by the upcoming core-compatibility and RetroAchievements modules; the UI now threads its live `MatchReport` through, the CLI passes `None` (it doesn't currently keep one around between commands)
+
 ## [0.1.0] - 2026-08-13
 
 First release: DAT parsing (No-Intro/Redump/TOSEC/MAME), ROM scanning and

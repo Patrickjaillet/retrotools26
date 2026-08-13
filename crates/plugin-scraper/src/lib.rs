@@ -254,6 +254,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         let err = ScraperPlugin.run(&ctx).unwrap_err();

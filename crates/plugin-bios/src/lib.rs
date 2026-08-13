@@ -111,6 +111,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source_dir),
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
 
@@ -133,6 +134,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output_dir,
+            match_report: None,
             dry_run: false,
         };
         assert!(BiosPlugin.run(&ctx).is_err());

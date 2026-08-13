@@ -148,6 +148,76 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
     ui.separator();
     ui.add_space(12.0);
 
+    ui.label(RichText::new("Shader associations").strong());
+    ui.add_space(4.0);
+    ui.label(
+        RichText::new(
+            "Which shader preset to apply per RetroArch core, or per individual game. Run the \
+             \"Shader Overrides Export\" plugin (Plugins tab) to write the actual RetroArch \
+             override files from this list.",
+        )
+        .weak()
+        .small(),
+    );
+    ui.add_space(6.0);
+    if state.shader_presets.is_empty() {
+        state.refresh_shader_presets();
+    }
+    let mut remove_assoc = None;
+    for (index, assoc) in state.shader_associations.iter().enumerate() {
+        ui.horizontal(|ui| {
+            let target = match assoc.scope {
+                retrotools_plugin_shaders::ShaderScope::System => format!("core: {}", assoc.core_name),
+                retrotools_plugin_shaders::ShaderScope::Game => format!(
+                    "game: {} / {} / {}",
+                    assoc.core_name,
+                    assoc.content_dir_name.as_deref().unwrap_or(""),
+                    assoc.game_name.as_deref().unwrap_or("")
+                ),
+            };
+            ui.label(format!("{target} → {}", assoc.preset));
+            if ui.small_button("Remove").clicked() {
+                remove_assoc = Some(index);
+            }
+        });
+    }
+    if let Some(index) = remove_assoc {
+        state.remove_shader_association(index);
+    }
+
+    ui.add_space(6.0);
+    ui.horizontal(|ui| {
+        ui.checkbox(&mut state.shader_new_is_game, "Per-game (unchecked = whole core)");
+        ui.label("Core name:");
+        ui.text_edit_singleline(&mut state.shader_new_core);
+    });
+    if state.shader_new_is_game {
+        ui.horizontal(|ui| {
+            ui.label("Content dir:");
+            ui.text_edit_singleline(&mut state.shader_new_content_dir);
+            ui.label("Game name:");
+            ui.text_edit_singleline(&mut state.shader_new_game);
+        });
+    }
+    ui.horizontal(|ui| {
+        ui.label("Preset:");
+        egui::ComboBox::from_id_source("shader_preset_combo")
+            .selected_text(if state.shader_new_preset.is_empty() { "(choose)" } else { &state.shader_new_preset })
+            .show_ui(ui, |ui| {
+                let presets = state.shader_presets.clone();
+                for preset in &presets {
+                    ui.selectable_value(&mut state.shader_new_preset, preset.clone(), preset);
+                }
+            });
+        if ui.button("Add association").clicked() {
+            state.add_shader_association();
+        }
+    });
+
+    ui.add_space(16.0);
+    ui.separator();
+    ui.add_space(12.0);
+
     ui.label(RichText::new("DAT update sources").strong());
     ui.add_space(4.0);
     ui.label(

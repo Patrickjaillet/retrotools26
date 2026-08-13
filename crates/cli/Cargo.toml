@@ -22,5 +22,6 @@ retrotools-plugin-batocera-export.workspace = true
 retrotools-plugin-saves.workspace = true
 retrotools-plugin-controllers.workspace = true
 retrotools-plugin-scraper.workspace = true
+retrotools-plugin-shaders.workspace = true
 clap.workspace = true
 tracing.workspace = true

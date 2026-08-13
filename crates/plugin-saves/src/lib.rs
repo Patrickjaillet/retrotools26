@@ -264,6 +264,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source),
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         let outcome = SavesBackupPlugin.run(&ctx).unwrap();
@@ -293,6 +294,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source),
             output_dir: &output,
+            match_report: None,
             dry_run: true,
         };
         let outcome = SavesBackupPlugin.run(&ctx).unwrap();
@@ -315,6 +317,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&saves_dir),
             output_dir: &backup_dir,
+            match_report: None,
             dry_run: false,
         };
         let backup_outcome = SavesBackupPlugin.run(&backup_ctx).unwrap();
@@ -328,6 +331,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&archive_path),
             output_dir: &saves_dir,
+            match_report: None,
             dry_run: false,
         };
         let restore_outcome = SavesRestorePlugin.run(&restore_ctx).unwrap();
@@ -352,6 +356,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&saves_dir),
             output_dir: &backup_dir,
+            match_report: None,
             dry_run: false,
         };
         let archive_path = SavesBackupPlugin.run(&backup_ctx).unwrap().files_written[0].clone();
@@ -363,6 +368,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&archive_path),
             output_dir: &saves_dir,
+            match_report: None,
             dry_run: true,
         };
         let outcome = SavesRestorePlugin.run(&restore_ctx).unwrap();

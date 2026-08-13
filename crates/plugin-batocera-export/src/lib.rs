@@ -353,6 +353,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source),
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         let plugin = BatoceraExportPlugin { distro: Distro::Recalbox };
@@ -382,6 +383,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source),
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         let plugin = BatoceraExportPlugin { distro: Distro::Batocera };
@@ -405,6 +407,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source),
             output_dir: &output,
+            match_report: None,
             dry_run: true,
         };
         let plugin = BatoceraExportPlugin { distro: Distro::Recalbox };
@@ -429,6 +432,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source),
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         let plugin = BatoceraExportPlugin { distro: Distro::Lakka };
@@ -456,6 +460,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source_a),
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         plugin.run(&ctx_snes).unwrap();
@@ -466,6 +471,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source_b),
             output_dir: &output,
+            match_report: None,
             dry_run: false,
         };
         plugin.run(&ctx_nes).unwrap();

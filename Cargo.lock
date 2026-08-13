@@ -3521,6 +3521,7 @@ dependencies = [
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",
+ "retrotools-plugin-shaders",
  "tracing",
 ]
 
@@ -3639,6 +3640,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "retrotools-plugin-shaders"
+version = "0.1.0"
+dependencies = [
+ "retrotools-common",
+ "retrotools-core",
+ "retrotools-plugin-api",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "retrotools-ui"
 version = "0.1.0"
 dependencies = [
@@ -3655,6 +3667,7 @@ dependencies = [
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",
+ "retrotools-plugin-shaders",
  "rfd",
  "serde",
  "tracing",

@@ -27,6 +27,8 @@ fn default_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_saves::SavesRestorePlugin));
     registry.register(Box::new(retrotools_plugin_controllers::ControllerExportPlugin));
     registry.register(Box::new(retrotools_plugin_scraper::ScraperPlugin));
+    registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
+    registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
     registry
 }
 
@@ -161,6 +163,13 @@ pub struct AppState {
     pub checking_for_updates: bool,
     app_update_tx: Sender<AppUpdateMessage>,
     app_update_rx: Receiver<AppUpdateMessage>,
+    pub shader_associations: Vec<retrotools_plugin_shaders::ShaderAssociation>,
+    pub shader_presets: Vec<String>,
+    pub shader_new_is_game: bool,
+    pub shader_new_core: String,
+    pub shader_new_content_dir: String,
+    pub shader_new_game: String,
+    pub shader_new_preset: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -264,6 +273,13 @@ impl AppState {
             checking_for_updates: false,
             app_update_tx,
             app_update_rx,
+            shader_associations: retrotools_plugin_shaders::load_associations().unwrap_or_default(),
+            shader_presets: Vec::new(),
+            shader_new_is_game: false,
+            shader_new_core: String::new(),
+            shader_new_content_dir: String::new(),
+            shader_new_game: String::new(),
+            shader_new_preset: String::new(),
         }
     }
 
@@ -310,6 +326,62 @@ impl AppState {
             self.toast(ToastKind::Error, format!("Cannot save settings: {err}"));
         } else {
             self.toast(ToastKind::Info, "ScreenScraper credentials cleared");
+        }
+    }
+
+    pub fn refresh_shader_presets(&mut self) {
+        let dir = retrotools_plugin_shaders::library_dir();
+        self.shader_presets = retrotools_plugin_shaders::list_library(&dir)
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
+            .collect();
+    }
+
+    pub fn add_shader_association(&mut self) {
+        if self.shader_new_core.trim().is_empty() || self.shader_new_preset.trim().is_empty() {
+            self.toast(ToastKind::Warning, "Core name and preset are required");
+            return;
+        }
+        let assoc = retrotools_plugin_shaders::ShaderAssociation {
+            scope: if self.shader_new_is_game {
+                retrotools_plugin_shaders::ShaderScope::Game
+            } else {
+                retrotools_plugin_shaders::ShaderScope::System
+            },
+            core_name: self.shader_new_core.trim().to_string(),
+            content_dir_name: self.shader_new_is_game.then(|| self.shader_new_content_dir.trim().to_string()),
+            game_name: self.shader_new_is_game.then(|| self.shader_new_game.trim().to_string()),
+            preset: self.shader_new_preset.trim().to_string(),
+        };
+        if let Err(err) = assoc.validate() {
+            self.toast(ToastKind::Warning, err);
+            return;
+        }
+        let mut updated = self.shader_associations.clone();
+        updated.push(assoc);
+        match retrotools_plugin_shaders::save_associations(&updated) {
+            Ok(()) => {
+                self.shader_associations = updated;
+                self.shader_new_core.clear();
+                self.shader_new_content_dir.clear();
+                self.shader_new_game.clear();
+                self.shader_new_preset.clear();
+                self.toast(ToastKind::Success, "Shader association saved");
+            }
+            Err(err) => self.toast(ToastKind::Error, format!("Cannot save shader association: {err}")),
+        }
+    }
+
+    pub fn remove_shader_association(&mut self, index: usize) {
+        let mut updated = self.shader_associations.clone();
+        if index >= updated.len() {
+            return;
+        }
+        updated.remove(index);
+        match retrotools_plugin_shaders::save_associations(&updated) {
+            Ok(()) => self.shader_associations = updated,
+            Err(err) => self.toast(ToastKind::Error, format!("Cannot save shader associations: {err}")),
         }
     }
 
@@ -503,6 +575,7 @@ impl AppState {
             kept_game_names: &kept_game_names,
             source_dir: self.plugin_source_dir.as_deref(),
             output_dir: &output_dir,
+            match_report: self.match_report.as_ref(),
             dry_run: self.plugin_dry_run,
         };
 
