@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retro Tools 2026</title>
+<meta name="description" content="Retro Tools 2026 — build a perfect, duplicate-free retro game collection. Free, offline, no installation required.">
+<link rel="icon" type="image/png" href="app-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0714;
+    --bg2:#12102a;
+    --panel:#161233cc;
+    --panel-border:#3d2f7a;
+    --cyan:#38f4ff;
+    --magenta:#ff3ec8;
+    --orange:#ffb238;
+    --text:#eae6ff;
+    --text-dim:#a79fd6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    overflow-x:hidden;
+  }
+  #bg-canvas{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    display:block;
+  }
+  .scanlines{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.12) 3px,
+      rgba(0,0,0,0) 4px
+    );
+    mix-blend-mode:overlay;
+    opacity:0.5;
+  }
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(6,4,16,0.75) 100%);
+  }
+  main{position:relative; z-index:2;}
+
+  .pixel-font{font-family:'Press Start 2P',monospace;}
+
+  header.hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:6vh 20px;
+  }
+  .badge-icon{
+    width:72px;
+    height:72px;
+    border-radius:18px;
+    image-rendering:pixelated;
+    box-shadow:0 0 30px rgba(56,244,255,0.55), 0 0 70px rgba(255,62,200,0.25);
+    margin-bottom:22px;
+  }
+  h1.title{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(22px, 5vw, 48px);
+    line-height:1.5;
+    margin:0 0 18px;
+    color:#fff;
+    text-shadow:
+      0 0 8px var(--cyan),
+      0 0 22px rgba(56,244,255,0.6),
+      0 0 46px rgba(255,62,200,0.35);
+    letter-spacing:1px;
+  }
+  p.tagline{
+    font-size:clamp(16px, 2.4vw, 22px);
+    color:var(--text-dim);
+    max-width:640px;
+    margin:0 0 36px;
+    line-height:1.6;
+  }
+  .cta-row{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .btn{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    padding:14px 28px;
+    border-radius:10px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    border:2px solid transparent;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--cyan), #2478ff);
+    color:#04121a;
+    box-shadow:0 0 18px rgba(56,244,255,0.55);
+  }
+  .btn-primary:hover{ box-shadow:0 0 28px rgba(56,244,255,0.85); }
+  .btn-secondary{
+    background:transparent;
+    color:var(--text);
+    border-color:var(--panel-border);
+  }
+  .btn-secondary:hover{ border-color:var(--magenta); box-shadow:0 0 18px rgba(255,62,200,0.35); }
+
+  .scroll-cue{
+    margin-top:60px;
+    font-family:'VT323',monospace;
+    font-size:20px;
+    color:var(--text-dim);
+    animation:bob 2s ease-in-out infinite;
+    letter-spacing:2px;
+  }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0); opacity:0.6; }
+    50%{ transform:translateY(8px); opacity:1; }
+  }
+
+  section{
+    max-width:1080px;
+    margin:0 auto;
+    padding:80px 24px;
+  }
+  h2.section-title{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(16px, 2.6vw, 24px);
+    color:#fff;
+    text-align:center;
+    margin:0 0 14px;
+    text-shadow:0 0 14px rgba(56,244,255,0.45);
+  }
+  p.section-sub{
+    text-align:center;
+    color:var(--text-dim);
+    max-width:620px;
+    margin:0 auto 56px;
+    font-size:17px;
+    line-height:1.6;
+  }
+
+  .feature-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));
+    gap:22px;
+  }
+  .feature-card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:26px 22px;
+    backdrop-filter:blur(6px);
+    transition:border-color 0.2s ease, transform 0.2s ease;
+  }
+  .feature-card:hover{
+    border-color:var(--cyan);
+    transform:translateY(-4px);
+  }
+  .feature-icon{ font-size:30px; margin-bottom:14px; display:block; }
+  .feature-card h3{
+    margin:0 0 10px;
+    font-size:17px;
+    color:#fff;
+  }
+  .feature-card p{
+    margin:0;
+    color:var(--text-dim);
+    font-size:14.5px;
+    line-height:1.6;
+  }
+
+  .shots{
+    display:flex;
+    gap:28px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .crt-frame{
+    background:#1a1530;
+    border:1px solid var(--panel-border);
+    border-radius:16px;
+    padding:14px;
+    max-width:420px;
+    box-shadow:0 0 40px rgba(56,244,255,0.12);
+  }
+  .crt-frame .bar{
+    display:flex;
+    gap:6px;
+    margin-bottom:10px;
+    padding:0 4px;
+  }
+  .crt-frame .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--panel-border);
+  }
+  .crt-frame img{
+    width:100%;
+    display:block;
+    border-radius:6px;
+    border:1px solid #2a2350;
+  }
+  .crt-frame figcaption{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:13.5px;
+    margin-top:10px;
+    font-family:'VT323',monospace;
+    font-size:17px;
+    letter-spacing:0.5px;
+  }
+
+  .extras-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    gap:16px;
+  }
+  .extras-list li{
+    list-style:none;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:18px 20px;
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    color:var(--text-dim);
+    font-size:14.5px;
+    line-height:1.55;
+  }
+  .extras-list li b{ color:#fff; display:block; margin-bottom:4px; font-size:15.5px; }
+  .extras-list{ padding:0; margin:0; }
+  .extras-list span.emoji{ font-size:22px; }
+
+  .download{
+    text-align:center;
+  }
+  .download-panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:18px;
+    padding:44px 30px;
+    max-width:560px;
+    margin:0 auto;
+  }
+  .download-panel h3{
+    font-family:'Press Start 2P',monospace;
+    font-size:15px;
+    color:#fff;
+    margin:0 0 16px;
+  }
+  .download-panel p{ color:var(--text-dim); font-size:15px; line-height:1.6; margin:0 0 26px; }
+  .download-options{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .fine-print{ font-size:12.5px; color:#7a71a8; margin-top:18px; }
+  .fine-print a{ color:var(--text-dim); }
+
+  footer{
+    text-align:center;
+    padding:50px 24px 70px;
+    color:#655d92;
+    font-size:13.5px;
+    line-height:1.8;
+  }
+  footer a{ color:var(--text-dim); text-decoration:none; }
+  footer a:hover{ color:var(--cyan); }
+
+  @media (max-width:600px){
+    .badge-icon{ width:56px; height:56px; }
+    section{ padding:60px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<main>
+  <header class="hero">
+    <img class="badge-icon" src="app-icon.png" alt="Retro Tools 2026 icon">
+    <h1 class="title">RETRO TOOLS<br>2026</h1>
+    <p class="tagline">Turn a messy folder of ROMs into a clean, complete, one-game-one-ROM collection — the best version of every game, no duplicates, no guesswork.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/Patrickjaillet/retrotools26/releases/download/v0.1.0/RetroTools2026-Setup-0.1.0.exe">⬇ Download for Windows</a>
+      <a class="btn btn-secondary" href="https://github.com/Patrickjaillet/retrotools26">★ View on GitHub</a>
+    </div>
+    <div class="scroll-cue">▼ SCROLL ▼</div>
+  </header>
+
+  <section id="features">
+    <h2 class="section-title">WHAT IT DOES FOR YOU</h2>
+    <p class="section-sub">No spreadsheets, no manual sorting, no second-guessing which file is the "real" one.</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🎯</span>
+        <h3>One perfect copy of every game</h3>
+        <p>Point it at your ROM folder and your reference game list — it figures out which release to keep and which duplicates to drop.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🌍</span>
+        <h3>Your region, your language</h3>
+        <p>Tell it you prefer Europe over USA, or English over Japanese, and it always picks accordingly — down to the smallest revision.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📦</span>
+        <h3>Opens almost anything</h3>
+        <p>ZIP, 7Z, RAR and CHD disc images are all read automatically — no need to extract anything by hand first.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">👀</span>
+        <h3>Preview before it touches a file</h3>
+        <p>See exactly what will be kept and what will be removed, with a plain-English reason for every decision, before anything changes.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">↩️</span>
+        <h3>Undo anything</h3>
+        <p>Every copy, move or cleanup is logged and fully reversible — one click brings your files back exactly as they were.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        <h3>Fast, live progress</h3>
+        <p>Thousands of files scan in seconds, with a real-time speed readout so you always know how far along it is.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧭</span>
+        <h3>Guided or expert, your call</h3>
+        <p>New to this? A step-by-step wizard walks you through it. Know exactly what you want? Flip to expert mode and see every option at once.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🗂️</span>
+        <h3>Your whole collection, at a glance</h3>
+        <p>A dashboard shows every platform you manage, how complete each one is, and what still needs attention.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎨</span>
+        <h3>Looks the part</h3>
+        <p>Light or dark theme, adjustable interface size, and a VS-Code-style command palette for getting around fast.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="screenshots">
+    <h2 class="section-title">SEE IT IN ACTION</h2>
+    <p class="section-sub">A clean dashboard for your whole collection, and a guided builder for putting a set together.</p>
+    <div class="shots">
+      <figure class="crt-frame">
+        <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <img src="screenshot1.png" alt="Retro Tools 2026 dashboard showing tracked platforms and collection stats" loading="lazy">
+        <figcaption>Your collection, at a glance</figcaption>
+      </figure>
+      <figure class="crt-frame">
+        <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <img src="screenshot2.png" alt="1G1R builder screen with scan, rules, preview and build steps" loading="lazy">
+        <figcaption>Build a set, step by step</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="extras">
+    <h2 class="section-title">ALSO INCLUDED</h2>
+    <p class="section-sub">A few extra tools for people building out a full retrogaming setup.</p>
+    <ul class="extras-list">
+      <li><span class="emoji">🧰</span><div><b>BIOS checker</b>Verify your emulators' BIOS files are correct and complete, without ever typing a checksum yourself.</div></li>
+      <li><span class="emoji">📋</span><div><b>Playlist generator</b>Turn your finished collection into ready-to-use playlists for RetroArch, LaunchBox or ES-DE.</div></li>
+      <li><span class="emoji">💽</span><div><b>Disc image conversion</b>Convert raw disc images to and from the compressed CHD format in one step.</div></li>
+      <li><span class="emoji">🔌</span><div><b>Works fully offline</b>No account, no cloud, no telemetry. Your ROMs and your data never leave your PC.</div></li>
+      <li><span class="emoji">🧳</span><div><b>Portable, if you like</b>Run it straight off a USB stick with zero installation — or use the full installer, your choice.</div></li>
+      <li><span class="emoji">🆓</span><div><b>Free and open source</b>No cost, no ads, no catch. The full source is on GitHub for anyone curious.</div></li>
+    </ul>
+  </section>
+
+  <section id="download" class="download">
+    <h2 class="section-title">GET STARTED</h2>
+    <div class="download-panel">
+      <h3>READY PLAYER ONE</h3>
+      <p>Grab the version that suits you — a guided installer, or a portable copy you can run from anywhere.</p>
+      <div class="download-options">
+        <a class="btn btn-primary" href="https://github.com/Patrickjaillet/retrotools26/releases/download/v0.1.0/RetroTools2026-Setup-0.1.0.exe">⬇ Installer (.exe)</a>
+        <a class="btn btn-secondary" href="https://github.com/Patrickjaillet/retrotools26/releases/download/v0.1.0/RetroTools2026-Portable-0.1.0.zip">🧳 Portable (.zip)</a>
+      </div>
+      <p class="fine-print">Windows 10/11 · free · no account needed · full changelog and older versions on the <a href="https://github.com/Patrickjaillet/retrotools26/releases">releases page</a>.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>Retro Tools 2026 — © 2026 Patrick JAILLET</div>
+    <div>
+      <a href="https://github.com/Patrickjaillet/retrotools26">GitHub</a> ·
+      <a href="mailto:sandefjord.development@proton.me">Contact</a> ·
+      <a href="https://github.com/Patrickjaillet/retrotools26/blob/main/LICENSE">MIT License</a>
+    </div>
+  </footer>
+</main>
+
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script>
+(function(){
+  var canvas = document.getElementById('bg-canvas');
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0a0714, 0.055);
+
+  var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 2.4, 7);
+  camera.lookAt(0, 1.2, -10);
+
+  // Synthwave sun: layered glowing rings
+  var sunGroup = new THREE.Group();
+  var sunColors = [0xff3ec8, 0xff6fb0, 0xffb238];
+  for (var i = 0; i < 3; i++) {
+    var ring = new THREE.Mesh(
+      new THREE.RingGeometry(2.6 - i * 0.35, 2.9 - i * 0.35, 64),
+      new THREE.MeshBasicMaterial({ color: sunColors[i], transparent: true, opacity: 0.35 - i * 0.08, side: THREE.DoubleSide })
+    );
+    sunGroup.add(ring);
+  }
+  var sunCore = new THREE.Mesh(
+    new THREE.CircleGeometry(2.3, 64),
+    new THREE.MeshBasicMaterial({ color: 0xffb238, transparent: true, opacity: 0.18 })
+  );
+  sunGroup.add(sunCore);
+  sunGroup.position.set(0, 3.2, -22);
+  scene.add(sunGroup);
+
+  // Grid floor, receding to the horizon
+  var grid = new THREE.GridHelper(60, 40, 0x38f4ff, 0xff3ec8);
+  grid.material.transparent = true;
+  grid.material.opacity = 0.35;
+  grid.position.set(0, -1.2, -10);
+  scene.add(grid);
+
+  var grid2 = new THREE.GridHelper(60, 40, 0x38f4ff, 0x38f4ff);
+  grid2.material.transparent = true;
+  grid2.material.opacity = 0.12;
+  grid2.position.set(0, -1.19, -10);
+  scene.add(grid2);
+
+  // Drifting particles ("stars")
+  var starCount = 260;
+  var starGeo = new THREE.BufferGeometry();
+  var starPos = new Float32Array(starCount * 3);
+  for (var s = 0; s < starCount; s++) {
+    starPos[s * 3] = (Math.random() - 0.5) * 60;
+    starPos[s * 3 + 1] = Math.random() * 22 - 2;
+    starPos[s * 3 + 2] = -Math.random() * 70;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  var starMat = new THREE.PointsMaterial({ color: 0xeae6ff, size: 0.06, transparent: true, opacity: 0.7 });
+  var stars = new THREE.Points(starGeo, starMat);
+  scene.add(stars);
+
+  function onResize() {
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', onResize);
+
+  var clock = new THREE.Clock();
+  function animate() {
+    requestAnimationFrame(animate);
+    var t = clock.getElapsedTime();
+
+    grid.position.z = -10 + ((t * 2.2) % 3);
+    grid2.position.z = grid.position.z;
+
+    sunGroup.rotation.z = t * 0.05;
+    sunGroup.position.y = 3.2 + Math.sin(t * 0.3) * 0.15;
+
+    stars.rotation.y = t * 0.01;
+
+    camera.position.x = Math.sin(t * 0.08) * 0.6;
+    camera.lookAt(0, 1.2, -10);
+
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>
