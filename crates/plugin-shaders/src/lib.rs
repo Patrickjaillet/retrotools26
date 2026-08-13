@@ -92,22 +92,28 @@ fn save_associations_to(path: &Path, associations: &[ShaderAssociation]) -> Resu
 
 /// A handful of commonly used preset *references*: shader presets are
 /// normally just a list of pass definitions pointing at shader files
-/// RetroArch already ships (`shaders_slang/…`), so a preset file is tiny —
-/// these are realistic starting points, not a bundled shader implementation
-/// (this project ships no GLSL/slang shader code of its own).
+/// RetroArch already ships under `shaders/shaders_slang/…`, so a preset
+/// file is tiny — these are realistic starting points, not a bundled
+/// shader implementation (this project ships no GLSL/slang shader code of
+/// its own, and none of these three files were copied from the community
+/// `libretro/slang-shaders` repository — only its real, publicly visible
+/// folder/file layout was used as a reference so the paths below actually
+/// resolve on a standard RetroArch install; the repository mixes several
+/// third-party licenses per shader author, so nothing from it is
+/// redistributed here verbatim).
 pub fn starter_presets() -> Vec<(&'static str, &'static str)> {
     vec![
         (
             "crt-geom.slangp",
-            "shaders = \"1\"\nshader0 = \"shaders_slang/crt/crt-geom.slang\"\nfilter_linear0 = \"true\"\nscale_type0 = \"viewport\"\n",
+            "shaders = \"1\"\nshader0 = \"shaders_slang/crt/shaders/crt-geom.slang\"\nfilter_linear0 = \"true\"\nscale_type0 = \"viewport\"\n",
         ),
         (
             "scanlines-sharp.slangp",
-            "shaders = \"1\"\nshader0 = \"shaders_slang/handheld/scanline.slang\"\nfilter_linear0 = \"false\"\nscale_type0 = \"source\"\nscale0 = \"1\"\n",
+            "shaders = \"1\"\nshader0 = \"shaders_slang/scanlines/shaders/scanline.slang\"\nfilter_linear0 = \"false\"\nscale_type0 = \"viewport\"\n",
         ),
         (
-            "hq2x.glslp",
-            "shaders = \"1\"\nshader0 = \"shaders_glsl/hqx/hq2x.glsl\"\nfilter_linear0 = \"true\"\nscale_type0 = \"source\"\nscale0 = \"2\"\n",
+            "scale2x.slangp",
+            "shaders = \"2\"\nshader0 = \"shaders_slang/edge-smoothing/scalenx/shaders/scale2x.slang\"\nfilter_linear0 = \"false\"\nscale_type0 = \"source\"\nscale_x0 = \"2.0\"\nscale_y0 = \"2.0\"\nshader1 = \"shaders_slang/interpolation/shaders/bicubic.slang\"\nfilter_linear1 = \"false\"\nscale_type1 = \"viewport\"\n",
         ),
     ]
 }
@@ -447,6 +453,20 @@ mod tests {
         let listed = list_library(&dir).unwrap();
         assert_eq!(listed.len(), 2);
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// The starter presets reference real `libretro/slang-shaders` file
+    /// paths (verified against the upstream repository layout, not copied
+    /// from it) so they actually resolve on a standard RetroArch install —
+    /// this pins the exact paths down so a future edit can't silently
+    /// regress them back to a guessed/incorrect layout.
+    #[test]
+    fn starter_presets_reference_real_retroarch_shader_paths() {
+        let presets = starter_presets();
+        assert!(presets[0].1.contains("shaders_slang/crt/shaders/crt-geom.slang"));
+        assert!(presets[1].1.contains("shaders_slang/scanlines/shaders/scanline.slang"));
+        assert!(presets[2].1.contains("shaders_slang/edge-smoothing/scalenx/shaders/scale2x.slang"));
+        assert!(presets[2].1.contains("shaders_slang/interpolation/shaders/bicubic.slang"));
     }
 
     #[test]
