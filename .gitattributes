@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+*.rs text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.exe binary
+*.msi binary
+
+Cargo.lock text eol=lf linguist-generated=true

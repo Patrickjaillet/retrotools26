@@ -1,0 +1,23 @@
+/target
+**/target
+*.pdb
+*.exe
+*.msi
+
+# Bundled third-party CLI tools required for RAR/CHD support (see
+# docs/COMPILATION.md) — tracked despite the *.exe rule above.
+!/resources/*.exe
+
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+*.log
+logs/
+
+ROADMAP.md
+CLAUDE.md
+.claude/

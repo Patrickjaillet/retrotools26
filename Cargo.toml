@@ -1,0 +1,63 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/common",
+    "crates/core",
+    "crates/ui",
+    "crates/cli",
+    "crates/plugin-api",
+    "crates/plugin-playlists",
+    "crates/plugin-bios",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Patrick JAILLET <sandefjord.development@proton.me>"]
+license = "MIT"
+repository = "https://github.com/Patrickjaillet/retrotools26"
+homepage = "https://patrickjaillet.github.io/retrotools26"
+rust-version = "1.75"
+
+[workspace.dependencies]
+retrotools-common = { path = "crates/common" }
+retrotools-core = { path = "crates/core" }
+retrotools-plugin-api = { path = "crates/plugin-api" }
+retrotools-plugin-playlists = { path = "crates/plugin-playlists" }
+retrotools-plugin-bios = { path = "crates/plugin-bios" }
+thiserror = "1.0"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+directories = "5.0"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "=4.4.18", features = ["derive"] }
+quick-xml = { version = "0.31", features = ["serialize"] }
+zip = { version = "0.6", default-features = false, features = ["deflate"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+rayon = "1.10"
+walkdir = "2.5"
+crc32fast = "1.4"
+md-5 = "0.10"
+sha1 = "0.10"
+sha2 = "0.10"
+tar = "0.4"
+sevenz-rust = "0.6"
+notify = "6.1"
+ureq = "2.12"
+printpdf = { version = "0.11.1", default-features = false, features = ["html"] }
+criterion = "0.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.dev]
+opt-level = 0

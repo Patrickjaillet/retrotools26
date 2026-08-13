@@ -1,0 +1,22 @@
+[package]
+name = "retrotools-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "retrotools-cli"
+path = "src/main.rs"
+
+[dependencies]
+retrotools-common.workspace = true
+retrotools-core.workspace = true
+retrotools-plugin-api.workspace = true
+retrotools-plugin-playlists.workspace = true
+retrotools-plugin-bios.workspace = true
+clap.workspace = true
+tracing.workspace = true
