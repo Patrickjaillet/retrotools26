@@ -20,6 +20,7 @@ retrotools-plugin-playlists.workspace = true
 retrotools-plugin-bios.workspace = true
 retrotools-plugin-batocera-export.workspace = true
 retrotools-plugin-saves.workspace = true
+retrotools-plugin-controllers.workspace = true
 eframe = { version = "0.28", default-features = false, features = ["default_fonts", "glow", "persistence"] }
 egui = "0.28"
 egui_extras = { version = "0.28", features = ["all_loaders"] }

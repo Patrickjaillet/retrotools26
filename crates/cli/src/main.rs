@@ -1200,6 +1200,7 @@ fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     }));
     registry.register(Box::new(retrotools_plugin_saves::SavesBackupPlugin));
     registry.register(Box::new(retrotools_plugin_saves::SavesRestorePlugin));
+    registry.register(Box::new(retrotools_plugin_controllers::ControllerExportPlugin));
     registry
 }
 

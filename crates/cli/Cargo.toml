@@ -20,5 +20,6 @@ retrotools-plugin-playlists.workspace = true
 retrotools-plugin-bios.workspace = true
 retrotools-plugin-batocera-export.workspace = true
 retrotools-plugin-saves.workspace = true
+retrotools-plugin-controllers.workspace = true
 clap.workspace = true
 tracing.workspace = true

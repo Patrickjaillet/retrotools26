@@ -153,6 +153,19 @@ want needs one.
   `fileops::safe_delete` instead of reimplementing "move the old file out of
   the way before overwriting it".
 
+- **`retrotools-plugin-controllers`** (`crates/plugin-controllers`) —
+  `controllers-export`. A good example of a plugin whose "library" is a
+  plain folder of real third-party-format files (RetroArch `.cfg`
+  autoconfig profiles) rather than a JSON structure invented for this app —
+  anyone can drop in a `.cfg` they found online or exported from RetroArch
+  itself. Adding a new profile to the shared library: drop a valid
+  `.cfg` file into `plugin_data_dir_path("controllers")/profiles/`
+  (`retrotools_common::config::plugin_data_dir_path`); it needs
+  `input_driver`, `input_device`, and at least one `input_*_btn`/
+  `input_*_axis` mapping to be picked up (`validate_autoconfig` checks
+  exactly that) — an invalid file is skipped and named in the plugin's
+  outcome, not a silent failure.
+
 ### The Batocera/Recalbox/Lakka system table
 
 `retrotools-plugin-batocera-export` ships a small built-in table mapping
