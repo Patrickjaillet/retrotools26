@@ -3,6 +3,7 @@
 mod app;
 mod i18n;
 mod platform_badge;
+mod shader_preview;
 mod state;
 mod theme;
 mod toast;

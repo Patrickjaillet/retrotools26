@@ -175,6 +175,7 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
                     assoc.game_name.as_deref().unwrap_or("")
                 ),
             };
+            crate::shader_preview::draw(ui, &assoc.preset, egui::vec2(48.0, 32.0));
             ui.label(format!("{target} → {}", assoc.preset));
             if ui.small_button("Remove").clicked() {
                 remove_assoc = Some(index);
@@ -212,7 +213,18 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
         if ui.button("Add association").clicked() {
             state.add_shader_association();
         }
+        if !state.shader_new_preset.is_empty() {
+            crate::shader_preview::draw(ui, &state.shader_new_preset, egui::vec2(64.0, 42.0));
+        }
     });
+    ui.label(
+        RichText::new(
+            "Preview is a generated stand-in illustrating the shader's category (CRT/scanline/upscaler) \
+             — not a real screenshot; this project doesn't bundle third-party shader screenshots.",
+        )
+        .weak()
+        .small(),
+    );
 
     ui.add_space(16.0);
     ui.separator();
