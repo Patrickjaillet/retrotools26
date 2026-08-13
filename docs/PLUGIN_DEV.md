@@ -131,10 +131,15 @@ want needs one.
 ## What's intentionally not shipped yet
 
 `gestionnaire de médias/artwork avancé`, `scraper de métadonnées (IGDB,
-ScreenScraper, TheGamesDB)`, `intégration RetroAchievements` and
-`convertisseur de formats ROM/ISO (CHD, CSO, RVZ...)` from the roadmap are
-not implemented as plugins in this pass: the first three need third-party
-API keys/accounts this project doesn't have credentials for, and a correct
-CHD/CSO/RVZ converter needs licensed or reverse-engineered codec support
-well beyond what fits here. The `Plugin` trait and registry are ready for
-them — writing one is exactly the process above.
+ScreenScraper, TheGamesDB)` and `intégration RetroAchievements` from the
+roadmap are not implemented as plugins (or anywhere else): they need
+third-party API keys/accounts this project doesn't have credentials for.
+The `Plugin` trait and registry are ready for them — writing one is exactly
+the process above.
+
+ROM/ISO format conversion *is* implemented (`retrotools_core::convert`,
+`convert to-chd`/`convert from-chd` in the CLI) but lives directly in
+`retrotools-core` rather than as a plugin, since it reuses the same bundled
+`chdman.exe` the archive-scanning code already shells out to — CHD only;
+CSO (PSP) and RVZ (Dolphin) would each need their own dedicated codec that
+isn't bundled here.
