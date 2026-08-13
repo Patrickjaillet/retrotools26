@@ -328,6 +328,20 @@ fn show_details(ui: &mut Ui, state: &AppState, gameset: &retrotools_core::GameSe
                     ui.end_row();
                 }
             }
+
+            if state.config.retroachievements.is_configured() {
+                let hashes = retrotools_plugin_retroachievements::load_cached_hashes_for_platform(&gameset.platform);
+                let status = if hashes.is_empty() {
+                    "Not synced yet"
+                } else if game.roms.iter().any(|r| r.md5.as_deref().map(|md5| hashes.contains(&md5.to_lowercase())).unwrap_or(false)) {
+                    "Compatible (known hash)"
+                } else {
+                    "No known hash"
+                };
+                ui.label(RichText::new("RetroAchievements").weak());
+                ui.label(status);
+                ui.end_row();
+            }
         });
 
     ui.add_space(12.0);

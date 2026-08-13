@@ -55,6 +55,20 @@ impl ScreenScraperCredentials {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct RetroAchievementsCredentials {
+    #[serde(default)]
+    pub username: String,
+    #[serde(default)]
+    pub api_key_encrypted: String,
+}
+
+impl RetroAchievementsCredentials {
+    pub fn is_configured(&self) -> bool {
+        !self.username.is_empty() && !self.api_key_encrypted.is_empty()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub theme: ThemePreference,
@@ -83,6 +97,8 @@ pub struct AppConfig {
     /// downloaded-media cache before the plugin purges the oldest files.
     #[serde(default = "default_scraper_cache_limit_mb")]
     pub scraper_cache_limit_mb: u64,
+    #[serde(default)]
+    pub retroachievements: RetroAchievementsCredentials,
 }
 
 fn default_scraper_cache_limit_mb() -> u64 {
@@ -109,6 +125,7 @@ impl Default for AppConfig {
             ui_scale: default_ui_scale(),
             screenscraper: ScreenScraperCredentials::default(),
             scraper_cache_limit_mb: default_scraper_cache_limit_mb(),
+            retroachievements: RetroAchievementsCredentials::default(),
         }
     }
 }

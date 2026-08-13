@@ -218,6 +218,45 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
     ui.separator();
     ui.add_space(12.0);
 
+    ui.label(RichText::new("RetroAchievements").strong());
+    ui.add_space(4.0);
+    ui.label(
+        RichText::new(
+            "Your own RetroAchievements username and API key — never bundled with this app, \
+             stored encrypted on this machine. Needed to sync the known-compatible-hash cache \
+             used by the RetroAchievements plugin and the optional 1G1R tie-breaker.",
+        )
+        .weak()
+        .small(),
+    );
+    ui.add_space(6.0);
+    if state.config.retroachievements.is_configured() {
+        ui.horizontal(|ui| {
+            ui.label(RichText::new(format!("✓ Configured as {}", state.config.retroachievements.username)).color(egui::Color32::from_rgb(76, 175, 80)));
+            if ui.small_button("Clear").clicked() {
+                state.clear_retroachievements_credentials();
+            }
+        });
+    } else {
+        ui.label(RichText::new("Not configured — the RetroAchievements plugin will refuse to run until this is filled in.").weak());
+    }
+    ui.add_space(6.0);
+    egui::Grid::new("retroachievements_grid").num_columns(2).spacing([8.0, 6.0]).show(ui, |ui| {
+        ui.label("Username:");
+        ui.text_edit_singleline(&mut state.retroachievements_username_input);
+        ui.end_row();
+        ui.label("API key:");
+        ui.add(egui::TextEdit::singleline(&mut state.retroachievements_api_key_input).password(true));
+        ui.end_row();
+    });
+    if ui.button("Save RetroAchievements credentials").clicked() {
+        state.save_retroachievements_credentials();
+    }
+
+    ui.add_space(16.0);
+    ui.separator();
+    ui.add_space(12.0);
+
     ui.label(RichText::new("Core compatibility database").strong());
     ui.add_space(4.0);
     ui.label(

@@ -25,5 +25,6 @@ retrotools-plugin-scraper.workspace = true
 retrotools-plugin-shaders.workspace = true
 retrotools-plugin-core-advisor.workspace = true
 retrotools-plugin-sdcard-imager.workspace = true
+retrotools-plugin-retroachievements.workspace = true
 clap.workspace = true
 tracing.workspace = true

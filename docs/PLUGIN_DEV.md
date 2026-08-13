@@ -282,12 +282,30 @@ rather than failing outright.
      confirm the partition layout matches what the base image should have
      produced.
 
+- **`retrotools-plugin-retroachievements`** (`crates/plugin-retroachievements`)
+  — `retroachievements-sync`. Reads `AppConfig.retroachievements` (encrypted
+  via `retrotools_common::secrets`, same pattern as the scraper's
+  ScreenScraper credentials) and refuses to run until it's configured;
+  fetches and caches the known-compatible MD5 hash list for the platform's
+  RetroAchievements console id (via a small editable platform → console-id
+  table, same "editable JSON with a sensible default" pattern as the
+  Batocera export system table), then cross-references the current 1G1R
+  selection against that cache and reports any game with no known hash. It
+  deliberately does **not** touch selection itself — actually *preferring*
+  an RA-compatible alternate is a separate, opt-in tie-breaker,
+  `RulePriority::prefer_retroachievements_compatible` (`crates/core/src/rules.rs`),
+  disabled by default so it changes nothing unless turned on; both the
+  plugin and the tie-breaker read the same on-disk cache via
+  `load_cached_hashes_for_platform`, they just don't share any Rust state
+  directly (same "cooperate through a file, not a shared type" pattern as
+  the scraper/collections plugins in Phase 12/13).
+
 ## What's intentionally not shipped yet
 
-`intégration RetroAchievements` from the roadmap is not implemented as a
-plugin (or anywhere else): it needs a third-party API key/account this
-project doesn't have credentials for. The `Plugin` trait and registry are
-ready for it — writing one is exactly the process above.
+Every module named in the original roadmap phases now has a working
+implementation somewhere in this codebase (core, a plugin, or a CLI
+subcommand) — see `ROADMAP.md` for what's honestly marked done vs.
+partially covered vs. deferred within each phase, and why.
 
 ROM/ISO format conversion *is* implemented (`retrotools_core::convert`,
 `convert to-chd`/`from-chd`/`to-rvz`/`from-rvz`/`to-cso`/`from-cso` in the

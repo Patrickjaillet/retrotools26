@@ -15,6 +15,21 @@ pub struct RulePriority {
     pub exclude_unlicensed: bool,
     pub exclude_pirate: bool,
     pub exclude_bad_dump: bool,
+    /// Tie-breaker only, disabled by default so existing behavior is
+    /// unchanged: among otherwise-equally-ranked candidates, prefer the one
+    /// whose ROM MD5 (from the DAT) is a known RetroAchievements-compatible
+    /// hash. Set together with `retroachievements_compatible_roms` by
+    /// `retrotools-plugin-retroachievements` — this crate has no HTTP
+    /// client of its own, it only consumes the set that plugin built.
+    #[serde(default)]
+    pub prefer_retroachievements_compatible: bool,
+    /// Lowercased MD5 hashes known to be RetroAchievements-compatible.
+    /// Deliberately not persisted with a saved rule profile (it's a large,
+    /// frequently-refreshed cache, not a preference) — `#[serde(skip)]`
+    /// means a profile loaded from disk always starts with this empty,
+    /// independent of `prefer_retroachievements_compatible`'s saved value.
+    #[serde(skip, default)]
+    pub retroachievements_compatible_roms: std::collections::HashSet<String>,
 }
 
 impl Default for RulePriority {
@@ -31,6 +46,8 @@ impl Default for RulePriority {
             exclude_unlicensed: true,
             exclude_pirate: true,
             exclude_bad_dump: true,
+            prefer_retroachievements_compatible: false,
+            retroachievements_compatible_roms: std::collections::HashSet::new(),
         }
     }
 }
@@ -51,6 +68,8 @@ impl RulePriority {
             exclude_unlicensed: false,
             exclude_pirate: false,
             exclude_bad_dump: false,
+            prefer_retroachievements_compatible: false,
+            retroachievements_compatible_roms: std::collections::HashSet::new(),
         }
     }
 
@@ -111,7 +130,24 @@ fn revision_score(revision: &Option<String>) -> i64 {
     0
 }
 
-type ScoreKey = (i32, i32, i64, i32, i32);
+type ScoreKey = (i32, i32, i64, i32, i32, i32);
+
+/// True when `prefer_retroachievements_compatible` is on and at least one of
+/// `game`'s DAT-declared ROM MD5s is in the known-compatible set. This is a
+/// proxy, not RetroAchievements' own per-console hashing algorithm — the
+/// DAT's plain file MD5 happens to match RA's hash for many systems but not
+/// all (some compute over a trimmed/transformed region of the ROM); good
+/// enough for a tie-breaker, not represented as more precise than it is.
+fn is_ra_compatible(game: &Game, rules: &RulePriority) -> bool {
+    rules.prefer_retroachievements_compatible
+        && !rules.retroachievements_compatible_roms.is_empty()
+        && game.roms.iter().any(|rom| {
+            rom.md5
+                .as_deref()
+                .map(|md5| rules.retroachievements_compatible_roms.contains(&md5.to_lowercase()))
+                .unwrap_or(false)
+        })
+}
 
 fn compute_score(game: &Game, rules: &RulePriority) -> ScoreKey {
     let region_rank = best_rank(
@@ -129,7 +165,8 @@ fn compute_score(game: &Game, rules: &RulePriority) -> ScoreKey {
         0
     };
     let alt_penalty = if game.is_alt { -1 } else { 0 };
-    (region_rank, language_rank, revision, parent_bonus, alt_penalty)
+    let ra_bonus = if is_ra_compatible(game, rules) { 1 } else { 0 };
+    (region_rank, language_rank, revision, parent_bonus, alt_penalty, ra_bonus)
 }
 
 /// A "release": one or more disc/file entries that together form a single
@@ -357,6 +394,45 @@ mod tests {
         let kept = select_one_game_one_rom(&gameset.games, &rules);
         assert_eq!(kept.len(), 2);
         assert!(kept.iter().all(|g| g.name.starts_with("RPG (Europe)")));
+    }
+
+    // Two entries that end up perfectly tied on every existing criterion
+    // (same region, same canonical title after tag-stripping, neither a
+    // clone, neither carrying a recognized tag like beta/alt/rev) so that
+    // RA compatibility is the only thing that can break the tie.
+    const TIED_ALTS: &str = r#"<?xml version="1.0"?>
+<datafile>
+  <header><name>Test</name></header>
+  <game name="Game (Europe) (Version A)">
+    <rom name="Game (Europe) (Version A).bin" size="1" crc="00000001" md5="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"/>
+  </game>
+  <game name="Game (Europe) (Version B)">
+    <rom name="Game (Europe) (Version B).bin" size="1" crc="00000002" md5="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"/>
+  </game>
+</datafile>"#;
+
+    #[test]
+    fn ra_compatibility_only_breaks_ties_when_the_flag_is_enabled() {
+        let gameset = parse_dat_str(TIED_ALTS, "Test").unwrap();
+
+        // Disabled (default): with every other criterion tied, selection
+        // falls back to its existing deterministic order — unaffected by
+        // the RA fields existing at all.
+        let rules = RulePriority::default();
+        let kept_default = select_one_game_one_rom(&gameset.games, &rules);
+        assert_eq!(kept_default.len(), 1);
+
+        // Enabled, with only "Version B"'s MD5 known RA-compatible: it now
+        // wins the tie, purely because of the new tie-breaker.
+        let mut compatible_roms = std::collections::HashSet::new();
+        compatible_roms.insert("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".to_string());
+        let rules = RulePriority {
+            prefer_retroachievements_compatible: true,
+            retroachievements_compatible_roms: compatible_roms,
+            ..RulePriority::default()
+        };
+        let kept = select_one_game_one_rom(&gameset.games, &rules);
+        assert_eq!(kept[0].name, "Game (Europe) (Version B)");
     }
 
     #[test]

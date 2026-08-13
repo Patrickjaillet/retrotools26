@@ -314,6 +314,10 @@ fn rules_section(ui: &mut Ui, state: &mut AppState, gameset: &retrotools_core::G
 
     ui.add_space(10.0);
     ui.checkbox(&mut state.rules.prefer_parent, "Prefer parent release over clone (tie-break)");
+    ui.checkbox(
+        &mut state.rules.prefer_retroachievements_compatible,
+        "Prefer RetroAchievements-compatible version (tie-break; needs a synced hash cache — Plugins tab)",
+    );
 
     ui.add_space(6.0);
     ui.label(RichText::new("Exclude:").weak());

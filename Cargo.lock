@@ -3520,6 +3520,7 @@ dependencies = [
  "retrotools-plugin-controllers",
  "retrotools-plugin-core-advisor",
  "retrotools-plugin-playlists",
+ "retrotools-plugin-retroachievements",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",
  "retrotools-plugin-sdcard-imager",
@@ -3630,6 +3631,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "retrotools-plugin-retroachievements"
+version = "0.1.0"
+dependencies = [
+ "retrotools-common",
+ "retrotools-core",
+ "retrotools-plugin-api",
+ "serde",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "retrotools-plugin-saves"
 version = "0.1.0"
 dependencies = [
@@ -3688,6 +3701,7 @@ dependencies = [
  "retrotools-plugin-controllers",
  "retrotools-plugin-core-advisor",
  "retrotools-plugin-playlists",
+ "retrotools-plugin-retroachievements",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",
  "retrotools-plugin-sdcard-imager",

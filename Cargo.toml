@@ -15,6 +15,7 @@ members = [
     "crates/plugin-shaders",
     "crates/plugin-core-advisor",
     "crates/plugin-sdcard-imager",
+    "crates/plugin-retroachievements",
 ]
 
 [workspace.package]
@@ -39,6 +40,7 @@ retrotools-plugin-scraper = { path = "crates/plugin-scraper" }
 retrotools-plugin-shaders = { path = "crates/plugin-shaders" }
 retrotools-plugin-core-advisor = { path = "crates/plugin-core-advisor" }
 retrotools-plugin-sdcard-imager = { path = "crates/plugin-sdcard-imager" }
+retrotools-plugin-retroachievements = { path = "crates/plugin-retroachievements" }
 thiserror = "1.0"
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }

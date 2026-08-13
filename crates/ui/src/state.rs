@@ -31,6 +31,7 @@ fn default_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
     registry.register(Box::new(retrotools_plugin_core_advisor::CoreAdvisorPlugin));
     registry.register(Box::new(retrotools_plugin_sdcard_imager::SdCardInjectPlugin));
+    registry.register(Box::new(retrotools_plugin_retroachievements::RetroAchievementsPlugin));
     registry
 }
 
@@ -149,6 +150,8 @@ pub struct AppState {
     pub screenscraper_software_name_input: String,
     pub screenscraper_user_id_input: String,
     pub screenscraper_user_password_input: String,
+    pub retroachievements_username_input: String,
+    pub retroachievements_api_key_input: String,
     pub new_dat_source_name: String,
     pub new_dat_source_url: String,
     pub dat_sources_updating: std::collections::HashSet<String>,
@@ -260,6 +263,8 @@ impl AppState {
             screenscraper_software_name_input: String::new(),
             screenscraper_user_id_input: String::new(),
             screenscraper_user_password_input: String::new(),
+            retroachievements_username_input: String::new(),
+            retroachievements_api_key_input: String::new(),
             new_dat_source_name: String::new(),
             new_dat_source_url: String::new(),
             dat_sources_updating: std::collections::HashSet::new(),
@@ -386,6 +391,41 @@ impl AppState {
         match retrotools_plugin_shaders::save_associations(&updated) {
             Ok(()) => self.shader_associations = updated,
             Err(err) => self.toast(ToastKind::Error, format!("Cannot save shader associations: {err}")),
+        }
+    }
+
+    pub fn save_retroachievements_credentials(&mut self) {
+        use retrotools_common::secrets::encrypt_to_base64;
+        if self.retroachievements_username_input.is_empty() || self.retroachievements_api_key_input.is_empty() {
+            self.toast(ToastKind::Warning, "Fill in your username and API key first");
+            return;
+        }
+        let encrypted = encrypt_to_base64(&self.retroachievements_api_key_input).map_err(|e| e.to_string());
+        match encrypted {
+            Ok(api_key_encrypted) => {
+                self.config.retroachievements = retrotools_common::config::RetroAchievementsCredentials {
+                    username: self.retroachievements_username_input.clone(),
+                    api_key_encrypted,
+                };
+                match self.config.save() {
+                    Ok(()) => {
+                        self.retroachievements_username_input.clear();
+                        self.retroachievements_api_key_input.clear();
+                        self.toast(ToastKind::Success, "RetroAchievements credentials saved (encrypted)");
+                    }
+                    Err(err) => self.toast(ToastKind::Error, format!("Cannot save settings: {err}")),
+                }
+            }
+            Err(err) => self.toast(ToastKind::Error, format!("Cannot encrypt credentials: {err}")),
+        }
+    }
+
+    pub fn clear_retroachievements_credentials(&mut self) {
+        self.config.retroachievements = retrotools_common::config::RetroAchievementsCredentials::default();
+        if let Err(err) = self.config.save() {
+            self.toast(ToastKind::Error, format!("Cannot save settings: {err}"));
+        } else {
+            self.toast(ToastKind::Info, "RetroAchievements credentials cleared");
         }
     }
 
@@ -866,6 +906,13 @@ impl AppState {
     }
 
     pub fn run_preview(&mut self) {
+        let Some(gameset) = self.current_gameset() else {
+            return;
+        };
+        let platform = gameset.platform.clone();
+        if self.rules.prefer_retroachievements_compatible {
+            self.rules.retroachievements_compatible_roms = retrotools_plugin_retroachievements::load_cached_hashes_for_platform(&platform);
+        }
         let Some(gameset) = self.current_gameset() else {
             return;
         };

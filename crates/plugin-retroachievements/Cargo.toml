@@ -1,0 +1,17 @@
+[package]
+name = "retrotools-plugin-retroachievements"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+retrotools-common.workspace = true
+retrotools-core.workspace = true
+retrotools-plugin-api.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ureq.workspace = true
