@@ -61,7 +61,10 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
         return;
     };
 
-    ui.heading(format!("Games — {}", gameset.platform));
+    ui.horizontal(|ui| {
+        crate::platform_badge::draw(ui, &gameset.platform, 26.0);
+        ui.heading(format!("Games — {}", gameset.platform));
+    });
     ui.add_space(8.0);
 
     let all_regions: std::collections::BTreeSet<String> = gameset

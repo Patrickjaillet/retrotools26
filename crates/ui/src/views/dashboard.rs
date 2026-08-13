@@ -65,7 +65,10 @@ pub fn show(ui: &mut Ui, state: &AppState) {
         let mut entries: Vec<_> = stats.into_iter().collect();
         entries.sort_by(|a, b| a.0.cmp(&b.0));
         for (platform, count) in entries {
-            ui.label(format!("  {platform} — {count} game(s)"));
+            ui.horizontal(|ui| {
+                crate::platform_badge::draw(ui, &platform, 18.0);
+                ui.label(format!("{platform} — {count} game(s)"));
+            });
         }
     }
 }

@@ -2,6 +2,7 @@
 
 mod app;
 mod i18n;
+mod platform_badge;
 mod state;
 mod theme;
 mod toast;

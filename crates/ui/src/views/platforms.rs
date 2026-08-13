@@ -62,12 +62,15 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
 
             for (platform, dat_type, version, count) in platforms {
                 let selected = state.selected_platform.as_deref() == Some(platform.as_str());
-                if ui.selectable_label(selected, &platform).clicked() {
-                    state.selected_platform = Some(platform.clone());
-                    state.match_report = None;
-                    state.selection_preview = None;
-                    state.scan_outcome = None;
-                }
+                ui.horizontal(|ui| {
+                    crate::platform_badge::draw(ui, &platform, 22.0);
+                    if ui.selectable_label(selected, &platform).clicked() {
+                        state.selected_platform = Some(platform.clone());
+                        state.match_report = None;
+                        state.selection_preview = None;
+                        state.scan_outcome = None;
+                    }
+                });
                 ui.label(dat_type);
                 ui.label(version);
                 ui.label(count.to_string());
