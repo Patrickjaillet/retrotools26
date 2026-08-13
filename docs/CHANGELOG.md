@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-13
+
+First release: DAT parsing (No-Intro/Redump/TOSEC/MAME), ROM scanning and
+hashing (incl. ZIP/7Z/RAR/CHD), 1G1R selection with configurable
+region/language rules, file-build operations with undo, a static plugin
+system, a full CLI, an egui desktop UI, and Windows packaging
+(installer + portable build).
+
 ### Added
 - Replaced the two literal "Placeholder preview" mockups in `docs/screenshot1.png`/`screenshot2.png` with real captures of the running app (Dashboard and 1G1R Builder, with an actual DAT imported); corrected a stale claim in `docs/PLUGIN_DEV.md` that CHD conversion was unimplemented (it was added in Phase 7, `retrotools_core::convert`)
 - Real GitHub-Releases-backed auto-updater (`retrotools_common::updater::GitHubReleaseSource`): checks the public Releases API (no auth token needed) and compares versions; wired into the UI (startup check when `check_updates_on_startup` is on and a repository is configured in Settings, with a toast when an update is available) and the CLI (`check-update [--repository owner/repo]`); no repository is guessed by default (`AppConfig::update_repository` starts `None`)
@@ -89,7 +97,3 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Minimal command-line interface (`retrotools-cli`) exposing version and configuration path commands
 - Continuous integration workflow: format check, Clippy lint, Windows build and test
 - Professional repository scaffolding: `LICENSE` (MIT), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue and pull request templates, `.gitignore`, `.gitattributes`
-
-## [0.1.0] - Unreleased
-
-Initial project scaffold (Phase 0 — Technical Foundations). No end-user functionality yet.
