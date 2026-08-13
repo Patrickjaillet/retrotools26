@@ -100,6 +100,54 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
     ui.separator();
     ui.add_space(12.0);
 
+    ui.label(RichText::new("ScreenScraper.fr (metadata scraper)").strong());
+    ui.add_space(4.0);
+    ui.label(
+        RichText::new(
+            "Your own ScreenScraper.fr developer and account credentials — never bundled with this \
+             app, stored encrypted on this machine (Windows DPAPI, tied to your Windows login). \
+             The scraper plugin stays inactive until these are filled in.",
+        )
+        .weak()
+        .small(),
+    );
+    ui.add_space(6.0);
+    if state.config.screenscraper.is_configured() {
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("✓ Credentials configured").color(egui::Color32::from_rgb(76, 175, 80)));
+            if ui.small_button("Clear").clicked() {
+                state.clear_screenscraper_credentials();
+            }
+        });
+    } else {
+        ui.label(RichText::new("Not configured — the scraper plugin will refuse to run until this is filled in.").weak());
+    }
+    ui.add_space(6.0);
+    egui::Grid::new("screenscraper_grid").num_columns(2).spacing([8.0, 6.0]).show(ui, |ui| {
+        ui.label("Developer ID:");
+        ui.text_edit_singleline(&mut state.screenscraper_dev_id_input);
+        ui.end_row();
+        ui.label("Developer password:");
+        ui.add(egui::TextEdit::singleline(&mut state.screenscraper_dev_password_input).password(true));
+        ui.end_row();
+        ui.label("Software name:");
+        ui.text_edit_singleline(&mut state.screenscraper_software_name_input);
+        ui.end_row();
+        ui.label("Account ID:");
+        ui.text_edit_singleline(&mut state.screenscraper_user_id_input);
+        ui.end_row();
+        ui.label("Account password:");
+        ui.add(egui::TextEdit::singleline(&mut state.screenscraper_user_password_input).password(true));
+        ui.end_row();
+    });
+    if ui.button("Save ScreenScraper credentials").clicked() {
+        state.save_screenscraper_credentials();
+    }
+
+    ui.add_space(16.0);
+    ui.separator();
+    ui.add_space(12.0);
+
     ui.label(RichText::new("DAT update sources").strong());
     ui.add_space(4.0);
     ui.label(

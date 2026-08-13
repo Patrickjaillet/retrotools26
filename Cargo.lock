@@ -3520,6 +3520,7 @@ dependencies = [
  "retrotools-plugin-controllers",
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
+ "retrotools-plugin-scraper",
  "tracing",
 ]
 
@@ -3528,6 +3529,7 @@ name = "retrotools-common"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
  "chrono",
  "directories",
  "serde",
@@ -3539,6 +3541,7 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "ureq",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3624,6 +3627,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "retrotools-plugin-scraper"
+version = "0.1.0"
+dependencies = [
+ "retrotools-common",
+ "retrotools-core",
+ "retrotools-plugin-api",
+ "serde",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "retrotools-ui"
 version = "0.1.0"
 dependencies = [
@@ -3639,6 +3654,7 @@ dependencies = [
  "retrotools-plugin-controllers",
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
+ "retrotools-plugin-scraper",
  "rfd",
  "serde",
  "tracing",

@@ -21,5 +21,6 @@ retrotools-plugin-bios.workspace = true
 retrotools-plugin-batocera-export.workspace = true
 retrotools-plugin-saves.workspace = true
 retrotools-plugin-controllers.workspace = true
+retrotools-plugin-scraper.workspace = true
 clap.workspace = true
 tracing.workspace = true

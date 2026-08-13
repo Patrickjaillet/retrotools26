@@ -166,6 +166,15 @@ want needs one.
   exactly that) — an invalid file is skipped and named in the plugin's
   outcome, not a silent failure.
 
+- **`retrotools-plugin-scraper`** (`crates/plugin-scraper`) — `scraper`. A
+  good example of a plugin that needs real credentials: it reads
+  `AppConfig::screenscraper` (encrypted via `retrotools_common::secrets`,
+  decrypted only for the duration of one `run()` call) rather than taking
+  them through `PluginContext`, and refuses to run with a clear error until
+  Settings has been filled in. Also demonstrates a rate-limited/retried HTTP
+  client (`base_url` overridable, same test seam as `GitHubReleaseSource` in
+  `retrotools_common::updater`) and a size-limited local media cache.
+
 ### The Batocera/Recalbox/Lakka system table
 
 `retrotools-plugin-batocera-export` ships a small built-in table mapping

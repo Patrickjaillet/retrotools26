@@ -22,6 +22,39 @@ pub struct DatSourceEntry {
     pub url: String,
 }
 
+/// ScreenScraper.fr credentials for `retrotools-plugin-scraper`. Per the
+/// project's permanent rule for any third-party-service module, none of
+/// these are ever embedded in the software — every field starts empty and
+/// is only ever set by the user, from Settings. `dev_id`/`dev_password`
+/// (the application's own developer credentials, obtained by registering
+/// an app with ScreenScraper) and `user_id`/`user_password` (the user's own
+/// ScreenScraper account, for a higher quota) are stored encrypted
+/// (`retrotools_common::secrets`, Windows DPAPI) — `software_name` isn't a
+/// secret (just an identifying string sent with each request) so it's kept
+/// in plain text.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ScreenScraperCredentials {
+    #[serde(default)]
+    pub dev_id_encrypted: String,
+    #[serde(default)]
+    pub dev_password_encrypted: String,
+    #[serde(default)]
+    pub software_name: String,
+    #[serde(default)]
+    pub user_id_encrypted: String,
+    #[serde(default)]
+    pub user_password_encrypted: String,
+}
+
+impl ScreenScraperCredentials {
+    pub fn is_configured(&self) -> bool {
+        !self.dev_id_encrypted.is_empty()
+            && !self.dev_password_encrypted.is_empty()
+            && !self.user_id_encrypted.is_empty()
+            && !self.user_password_encrypted.is_empty()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub theme: ThemePreference,
@@ -44,6 +77,16 @@ pub struct AppConfig {
     /// accessibility.
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f32,
+    #[serde(default)]
+    pub screenscraper: ScreenScraperCredentials,
+    /// Maximum on-disk size (megabytes) for `retrotools-plugin-scraper`'s
+    /// downloaded-media cache before the plugin purges the oldest files.
+    #[serde(default = "default_scraper_cache_limit_mb")]
+    pub scraper_cache_limit_mb: u64,
+}
+
+fn default_scraper_cache_limit_mb() -> u64 {
+    2000
 }
 
 fn default_ui_scale() -> f32 {
@@ -64,6 +107,8 @@ impl Default for AppConfig {
             log_level: "info".to_string(),
             dat_sources: Vec::new(),
             ui_scale: default_ui_scale(),
+            screenscraper: ScreenScraperCredentials::default(),
+            scraper_cache_limit_mb: default_scraper_cache_limit_mb(),
         }
     }
 }

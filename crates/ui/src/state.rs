@@ -25,6 +25,7 @@ fn default_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_saves::SavesBackupPlugin));
     registry.register(Box::new(retrotools_plugin_saves::SavesRestorePlugin));
     registry.register(Box::new(retrotools_plugin_controllers::ControllerExportPlugin));
+    registry.register(Box::new(retrotools_plugin_scraper::ScraperPlugin));
     registry
 }
 
@@ -138,6 +139,11 @@ pub struct AppState {
     pub plugin_output_dir: Option<PathBuf>,
     pub plugin_dry_run: bool,
     pub plugin_last_outcomes: HashMap<String, Result<String, String>>,
+    pub screenscraper_dev_id_input: String,
+    pub screenscraper_dev_password_input: String,
+    pub screenscraper_software_name_input: String,
+    pub screenscraper_user_id_input: String,
+    pub screenscraper_user_password_input: String,
     pub new_dat_source_name: String,
     pub new_dat_source_url: String,
     pub dat_sources_updating: std::collections::HashSet<String>,
@@ -236,6 +242,11 @@ impl AppState {
             plugin_output_dir: None,
             plugin_dry_run: false,
             plugin_last_outcomes: HashMap::new(),
+            screenscraper_dev_id_input: String::new(),
+            screenscraper_dev_password_input: String::new(),
+            screenscraper_software_name_input: String::new(),
+            screenscraper_user_id_input: String::new(),
+            screenscraper_user_password_input: String::new(),
             new_dat_source_name: String::new(),
             new_dat_source_url: String::new(),
             dat_sources_updating: std::collections::HashSet::new(),
@@ -252,6 +263,52 @@ impl AppState {
             checking_for_updates: false,
             app_update_tx,
             app_update_rx,
+        }
+    }
+
+    pub fn save_screenscraper_credentials(&mut self) {
+        use retrotools_common::secrets::encrypt_to_base64;
+        if self.screenscraper_dev_id_input.is_empty()
+            || self.screenscraper_dev_password_input.is_empty()
+            || self.screenscraper_user_id_input.is_empty()
+            || self.screenscraper_user_password_input.is_empty()
+        {
+            self.toast(ToastKind::Warning, "Fill in developer ID/password and account ID/password first");
+            return;
+        }
+        let encrypted = (|| -> Result<_, String> {
+            Ok(retrotools_common::config::ScreenScraperCredentials {
+                dev_id_encrypted: encrypt_to_base64(&self.screenscraper_dev_id_input).map_err(|e| e.to_string())?,
+                dev_password_encrypted: encrypt_to_base64(&self.screenscraper_dev_password_input).map_err(|e| e.to_string())?,
+                software_name: self.screenscraper_software_name_input.clone(),
+                user_id_encrypted: encrypt_to_base64(&self.screenscraper_user_id_input).map_err(|e| e.to_string())?,
+                user_password_encrypted: encrypt_to_base64(&self.screenscraper_user_password_input).map_err(|e| e.to_string())?,
+            })
+        })();
+        match encrypted {
+            Ok(credentials) => {
+                self.config.screenscraper = credentials;
+                match self.config.save() {
+                    Ok(()) => {
+                        self.screenscraper_dev_id_input.clear();
+                        self.screenscraper_dev_password_input.clear();
+                        self.screenscraper_user_id_input.clear();
+                        self.screenscraper_user_password_input.clear();
+                        self.toast(ToastKind::Success, "ScreenScraper credentials saved (encrypted)");
+                    }
+                    Err(err) => self.toast(ToastKind::Error, format!("Cannot save settings: {err}")),
+                }
+            }
+            Err(err) => self.toast(ToastKind::Error, format!("Cannot encrypt credentials: {err}")),
+        }
+    }
+
+    pub fn clear_screenscraper_credentials(&mut self) {
+        self.config.screenscraper = retrotools_common::config::ScreenScraperCredentials::default();
+        if let Err(err) = self.config.save() {
+            self.toast(ToastKind::Error, format!("Cannot save settings: {err}"));
+        } else {
+            self.toast(ToastKind::Info, "ScreenScraper credentials cleared");
         }
     }
 
