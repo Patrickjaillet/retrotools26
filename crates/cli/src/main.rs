@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use retrotools_common::{current_version, AppConfig};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Copy, ValueEnum)]
 enum ModeArg {
@@ -190,6 +190,38 @@ enum Commands {
     Plugin(PluginCommands),
     #[command(subcommand)]
     Convert(ConvertCommands),
+    #[command(subcommand)]
+    Sdcard(SdcardCommands),
+}
+
+#[derive(Subcommand)]
+enum SdcardCommands {
+    /// List removable (USB) disks currently connected, with the exact id
+    /// each one needs for `sdcard write`
+    ListDevices,
+    /// Verify a downloaded base image against an official checksum before
+    /// writing it anywhere
+    Verify {
+        image: PathBuf,
+        #[arg(long)]
+        sha256: Option<String>,
+        #[arg(long)]
+        md5: Option<String>,
+    },
+    /// Write a base image to a removable device. DESTRUCTIVE AND
+    /// IRREVERSIBLE: everything already on the device is erased. Requires
+    /// typing the exact device id twice (--device and --confirm) as a
+    /// safety gate against selecting the wrong disk
+    Write {
+        image: PathBuf,
+        #[arg(long)]
+        device: String,
+        /// Must exactly match --device, or nothing is written
+        #[arg(long)]
+        confirm: String,
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -366,6 +398,7 @@ fn main() {
         }
         Some(Commands::Plugin(plugin_command)) => run_plugin_command(plugin_command),
         Some(Commands::Convert(convert_command)) => run_convert_command(convert_command),
+        Some(Commands::Sdcard(sdcard_command)) => run_sdcard_command(sdcard_command),
         None => {
             println!("Retro Tools 2026 {}", current_version());
             println!("Run with --help to see available commands.");
@@ -1218,6 +1251,7 @@ fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
     registry.register(Box::new(retrotools_plugin_core_advisor::CoreAdvisorPlugin));
+    registry.register(Box::new(retrotools_plugin_sdcard_imager::SdCardInjectPlugin));
     registry
 }
 
@@ -1278,6 +1312,42 @@ fn run_convert_command(command: ConvertCommands) {
         ConvertCommands::FromCso { source, dest_dir } => {
             match retrotools_core::convert_from_cso(&source, &dest_dir) {
                 Ok(path) => println!("wrote '{}'", path.display()),
+                Err(err) => eprintln!("error: {err}"),
+            }
+        }
+    }
+}
+
+fn run_sdcard_command(command: SdcardCommands) {
+    match command {
+        SdcardCommands::ListDevices => {
+            let devices = retrotools_plugin_sdcard_imager::list_removable_devices();
+            if devices.is_empty() {
+                println!("no removable USB disks detected");
+                return;
+            }
+            for device in devices {
+                println!("{}\t{}\t{} bytes", device.id, device.model, device.size_bytes);
+            }
+        }
+        SdcardCommands::Verify { image, sha256, md5 } => {
+            let result = match (sha256, md5) {
+                (Some(expected), None) => retrotools_plugin_sdcard_imager::verify_checksum(&image, retrotools_plugin_sdcard_imager::ChecksumAlgorithm::Sha256, &expected),
+                (None, Some(expected)) => retrotools_plugin_sdcard_imager::verify_checksum(&image, retrotools_plugin_sdcard_imager::ChecksumAlgorithm::Md5, &expected),
+                _ => Err("pass exactly one of --sha256 or --md5".to_string()),
+            };
+            match result {
+                Ok(()) => println!("checksum OK"),
+                Err(err) => eprintln!("error: {err}"),
+            }
+        }
+        SdcardCommands::Write { image, device, confirm, dry_run } => {
+            match retrotools_plugin_sdcard_imager::write_image(&image, Path::new(&device), &device, &confirm, dry_run) {
+                Ok(log) => {
+                    for line in log {
+                        println!("{line}");
+                    }
+                }
                 Err(err) => eprintln!("error: {err}"),
             }
         }

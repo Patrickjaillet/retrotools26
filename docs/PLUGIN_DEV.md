@@ -250,6 +250,38 @@ rather than failing outright.
   `game_name` always wins over it. This project doesn't host or query any
   online service for this community data — the user brings their own file.
 
+- **`retrotools-plugin-sdcard-imager`** (`crates/plugin-sdcard-imager`) —
+  standalone functions (`verify_checksum`, `list_removable_devices`,
+  `write_image`) plus one `Plugin`: `sdcard-inject`. Writing a raw image to
+  a physical disk is destructive and irreversible, so the risky parts are
+  **not** exposed through the generic `Plugin::run(ctx)` contract (which has
+  no room for a typed double-confirmation) — they're plain functions called
+  directly from dedicated `retrotools-cli sdcard list-devices`/`verify`/
+  `write` subcommands instead. `write_image` takes a `Path` for its
+  destination rather than a `RemovableDevice`, specifically so it can be
+  tested against a throwaway file; `sdcard write` refuses to run unless
+  `--device` and `--confirm` are typed identically, the same "type the
+  drive name back" pattern balenaEtcher/Raspberry Pi Imager use. The
+  `sdcard-inject` plugin (mounting content onto an already-imaged card) is
+  ordinary `Plugin::run(ctx)` — it just mirrors a staging folder
+  (`source_dir`) onto a mounted partition (`output_dir`), on the same
+  `source_dir`/`output_dir` contract as the Export/Controllers plugins.
+
+  **Manual validation on real hardware** (not automated — CI/tests only
+  exercise `write_image` against a throwaway file, per the roadmap):
+  1. `cargo run -p retrotools-cli -- sdcard list-devices` and confirm the
+     USB stick/SD card you intend to test with is listed with the expected
+     model/size, and copy its exact id.
+  2. Double-check that id against Windows Disk Management (or
+     `Get-Disk`/`Get-Partition` in PowerShell) — confirm it is *not* your
+     system disk before doing anything else.
+  3. `cargo run -p retrotools-cli -- sdcard write --image <base.img> --device <id> --confirm <id> --dry-run` first, read the log.
+  4. Only then drop `--dry-run` and re-run for a real write, on a device you
+     are fully prepared to have erased.
+  5. Re-run `sdcard list-devices` / check Disk Management again afterward to
+     confirm the partition layout matches what the base image should have
+     produced.
+
 ## What's intentionally not shipped yet
 
 `intégration RetroAchievements` from the roadmap is not implemented as a

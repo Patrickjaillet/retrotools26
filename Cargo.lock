@@ -3522,6 +3522,7 @@ dependencies = [
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",
+ "retrotools-plugin-sdcard-imager",
  "retrotools-plugin-shaders",
  "tracing",
 ]
@@ -3652,6 +3653,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "retrotools-plugin-sdcard-imager"
+version = "0.1.0"
+dependencies = [
+ "retrotools-common",
+ "retrotools-core",
+ "retrotools-plugin-api",
+]
+
+[[package]]
 name = "retrotools-plugin-shaders"
 version = "0.1.0"
 dependencies = [
@@ -3680,6 +3690,7 @@ dependencies = [
  "retrotools-plugin-playlists",
  "retrotools-plugin-saves",
  "retrotools-plugin-scraper",
+ "retrotools-plugin-sdcard-imager",
  "retrotools-plugin-shaders",
  "rfd",
  "serde",

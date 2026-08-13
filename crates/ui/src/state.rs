@@ -30,6 +30,7 @@ fn default_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
     registry.register(Box::new(retrotools_plugin_core_advisor::CoreAdvisorPlugin));
+    registry.register(Box::new(retrotools_plugin_sdcard_imager::SdCardInjectPlugin));
     registry
 }
 
