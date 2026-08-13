@@ -200,6 +200,18 @@ enum ConvertCommands {
     /// Extract a CHD back to a raw image (.bin, plus a .cue if it was a CD image),
     /// via the bundled `chdman.exe`
     FromChd { source: PathBuf, dest_dir: PathBuf },
+    /// Convert a GameCube/Wii disc image (.iso/.gcm/.gcz) into RVZ, via a
+    /// third-party `DolphinTool` (not bundled, see docs/COMPILATION.md)
+    ToRvz { source: PathBuf, dest: PathBuf },
+    /// Convert an RVZ back to a plain .iso, via a third-party `DolphinTool`
+    /// (not bundled, see docs/COMPILATION.md)
+    FromRvz { source: PathBuf, dest_dir: PathBuf },
+    /// Compress a PSP disc image (.iso) into CSO, via a third-party `maxcso`
+    /// (not bundled, see docs/COMPILATION.md)
+    ToCso { source: PathBuf, dest: PathBuf },
+    /// Decompress a CSO back to a plain .iso, via a third-party `maxcso`
+    /// (not bundled, see docs/COMPILATION.md)
+    FromCso { source: PathBuf, dest_dir: PathBuf },
 }
 
 #[derive(Subcommand)]
@@ -1245,6 +1257,26 @@ fn run_convert_command(command: ConvertCommands) {
         },
         ConvertCommands::FromChd { source, dest_dir } => {
             match retrotools_core::convert_from_chd(&source, &dest_dir) {
+                Ok(path) => println!("wrote '{}'", path.display()),
+                Err(err) => eprintln!("error: {err}"),
+            }
+        }
+        ConvertCommands::ToRvz { source, dest } => match retrotools_core::convert_to_rvz(&source, &dest) {
+            Ok(path) => println!("wrote '{}'", path.display()),
+            Err(err) => eprintln!("error: {err}"),
+        },
+        ConvertCommands::FromRvz { source, dest_dir } => {
+            match retrotools_core::convert_from_rvz(&source, &dest_dir) {
+                Ok(path) => println!("wrote '{}'", path.display()),
+                Err(err) => eprintln!("error: {err}"),
+            }
+        }
+        ConvertCommands::ToCso { source, dest } => match retrotools_core::convert_to_cso(&source, &dest) {
+            Ok(path) => println!("wrote '{}'", path.display()),
+            Err(err) => eprintln!("error: {err}"),
+        },
+        ConvertCommands::FromCso { source, dest_dir } => {
+            match retrotools_core::convert_from_cso(&source, &dest_dir) {
                 Ok(path) => println!("wrote '{}'", path.display()),
                 Err(err) => eprintln!("error: {err}"),
             }

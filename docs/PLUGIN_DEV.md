@@ -258,8 +258,9 @@ project doesn't have credentials for. The `Plugin` trait and registry are
 ready for it — writing one is exactly the process above.
 
 ROM/ISO format conversion *is* implemented (`retrotools_core::convert`,
-`convert to-chd`/`convert from-chd` in the CLI) but lives directly in
-`retrotools-core` rather than as a plugin, since it reuses the same bundled
-`chdman.exe` the archive-scanning code already shells out to — CHD only;
-CSO (PSP) and RVZ (Dolphin) would each need their own dedicated codec that
-isn't bundled here.
+`convert to-chd`/`from-chd`/`to-rvz`/`from-rvz`/`to-cso`/`from-cso` in the
+CLI) but lives directly in `retrotools-core` rather than as a plugin, since
+it just shells out to a command-line tool the same way `archive.rs` already
+does for CHD — see `docs/COMPILATION.md` for which of the three tools
+(`chdman`, `DolphinTool`, `maxcso`) are bundled versus need to be obtained
+by the user. No UI integration yet (CLI only), same as CHD conversion.

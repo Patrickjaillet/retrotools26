@@ -13,6 +13,13 @@ pub enum ExternalTool {
     SevenZip,
     Chdman,
     UnRar,
+    /// Dolphin's command-line conversion tool, used for RVZ (GameCube/Wii)
+    /// conversion — not bundled with this app, the user must obtain it
+    /// themselves (see `docs/COMPILATION.md`).
+    DolphinTool,
+    /// `maxcso`, used for CSO (PSP) conversion — not bundled with this app,
+    /// the user must obtain it themselves (see `docs/COMPILATION.md`).
+    Maxcso,
 }
 
 impl ExternalTool {
@@ -21,6 +28,8 @@ impl ExternalTool {
             ExternalTool::SevenZip => "7za.exe",
             ExternalTool::Chdman => "chdman.exe",
             ExternalTool::UnRar => "UnRAR.exe",
+            ExternalTool::DolphinTool => "DolphinTool.exe",
+            ExternalTool::Maxcso => "maxcso.exe",
         }
     }
 
@@ -29,6 +38,8 @@ impl ExternalTool {
             ExternalTool::SevenZip => "RETROTOOLS_7ZA_PATH",
             ExternalTool::Chdman => "RETROTOOLS_CHDMAN_PATH",
             ExternalTool::UnRar => "RETROTOOLS_UNRAR_PATH",
+            ExternalTool::DolphinTool => "RETROTOOLS_DOLPHINTOOL_PATH",
+            ExternalTool::Maxcso => "RETROTOOLS_MAXCSO_PATH",
         }
     }
 }
@@ -92,7 +103,13 @@ mod tests {
         // This only asserts something when resources/ is actually present
         // (as it is in this repo's dev checkout); it must not fail on a
         // machine that doesn't have it, since that's a legitimate state too.
-        for tool in [ExternalTool::SevenZip, ExternalTool::Chdman, ExternalTool::UnRar] {
+        for tool in [
+            ExternalTool::SevenZip,
+            ExternalTool::Chdman,
+            ExternalTool::UnRar,
+            ExternalTool::DolphinTool,
+            ExternalTool::Maxcso,
+        ] {
             if let Ok(path) = find_tool(tool) {
                 assert!(path.is_file());
             }

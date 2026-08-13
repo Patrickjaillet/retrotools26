@@ -22,7 +22,7 @@ pub mod watcher;
 
 pub use cache::{DatCache, ScanCache};
 pub use compare::{compare_scans, SetComparison};
-pub use convert::{convert_from_chd, convert_to_chd};
+pub use convert::{convert_from_chd, convert_from_cso, convert_from_rvz, convert_to_chd, convert_to_cso, convert_to_rvz};
 pub use dat_library::{platforms_missing_dat, DatEntry, DatLibrary};
 pub use dat_update::{check_for_update, download_dat, DatSource, DatUpdateReport};
 pub use fileops::{

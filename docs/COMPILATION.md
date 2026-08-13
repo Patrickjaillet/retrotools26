@@ -107,6 +107,27 @@ When packaging a release, copy `resources/` next to `retrotools2026.exe`
 and `retrotools-cli.exe` under `target/release/` (or wherever the installer
 places them) so the lookup above finds them.
 
+### RVZ (GameCube/Wii) and CSO (PSP) conversion — not bundled
+
+`convert to-rvz`/`from-rvz` and `convert to-cso`/`from-cso` (`crates/core/src/convert.rs`)
+shell out the same way, but to two tools this project does **not** bundle
+under `resources/` (unlike UnRAR/chdman/7za above) since neither ships a
+freely-redistributable standalone CLI build this project could legally
+include:
+
+| Tool | Used for | Project | Env var override |
+|---|---|---|---|
+| `DolphinTool.exe` | RVZ conversion | [Dolphin Emulator](https://dolphin-emu.org/) — ships as part of a Dolphin install | `RETROTOOLS_DOLPHINTOOL_PATH` |
+| `maxcso.exe` | CSO conversion | [maxcso](https://github.com/unknownbrackets/maxcso) | `RETROTOOLS_MAXCSO_PATH` |
+
+Install either tool yourself and either put it on `PATH`, set the matching
+environment variable, or drop it into your own `resources/` folder next to
+the executable (`find_tool` checks that location too, it doesn't care
+whether this project or the user put a file there). Without the tool
+present, the corresponding `convert` subcommand fails with a clear error
+naming what's missing — CHD conversion and every scanning format keep
+working regardless.
+
 ## Packaging (Windows installer & portable build)
 
 Two distribution forms are produced from the same release build, via
