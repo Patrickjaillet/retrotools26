@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-08-14
+
+Adds the "Modules Futurs Retrogaming" batch (Phases 11-20): Batocera/
+Recalbox/Lakka export, ScreenScraper metadata scraping, ES-DE smart
+collections, save backup/restore, controller profile library, shader
+overrides, a core-compatibility advisor, RVZ/CSO conversion, SD/USB card
+imaging, and RetroAchievements integration — plus generated platform
+badges and shader preset previews in the UI.
+
 ### Added
 - Static shader preset previews (`crates/ui/src/shader_preview.rs`): a small synthetic reference image shown next to each shader association and in the preset picker in Settings, illustrating the preset's category (CRT/scanline/pixel-art upscaler) with scanline overlays, a vignette, or a blocky-vs-smooth split — not a real screenshot, since this project doesn't bundle third-party shader/game screenshots; the file-name classification is a pure, unit-tested function kept separate from the drawing code
 - Procedurally generated platform badges (`crates/ui/src/platform_badge.rs`): a deterministic colored circle with 2-4 letter initials derived from the platform's name, shown in the Platforms, Dashboard and Games tabs — real console/company logos are trademarks and can't legally be bundled in this public repository under any license this project could choose, so this sidesteps that entirely while still giving every platform a distinct visual identity

@@ -11,7 +11,7 @@
 ; The compiled installer is written to packaging\output\.
 
 #define AppName "Retro Tools 2026"
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.2"
 #define AppPublisher "Patrick JAILLET"
 #define AppExeName "retrotools2026.exe"
 #define CliExeName "retrotools-cli.exe"
