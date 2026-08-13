@@ -3515,6 +3515,7 @@ dependencies = [
  "retrotools-common",
  "retrotools-core",
  "retrotools-plugin-api",
+ "retrotools-plugin-batocera-export",
  "retrotools-plugin-bios",
  "retrotools-plugin-playlists",
  "tracing",
@@ -3572,6 +3573,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "retrotools-plugin-batocera-export"
+version = "0.1.0"
+dependencies = [
+ "retrotools-common",
+ "retrotools-core",
+ "retrotools-plugin-api",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "retrotools-plugin-bios"
 version = "0.1.0"
 dependencies = [
@@ -3600,6 +3612,7 @@ dependencies = [
  "retrotools-common",
  "retrotools-core",
  "retrotools-plugin-api",
+ "retrotools-plugin-batocera-export",
  "retrotools-plugin-bios",
  "retrotools-plugin-playlists",
  "rfd",

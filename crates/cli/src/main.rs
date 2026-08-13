@@ -222,6 +222,9 @@ enum PluginCommands {
         /// instead of operating on every game in the DAT
         #[arg(long)]
         profile: Option<String>,
+        /// Compute and report what the plugin would do, without writing anything
+        #[arg(long)]
+        dry_run: bool,
     },
 }
 
@@ -1186,6 +1189,15 @@ fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     let mut registry = retrotools_plugin_api::PluginRegistry::new();
     registry.register(Box::new(retrotools_plugin_playlists::PlaylistPlugin));
     registry.register(Box::new(retrotools_plugin_bios::BiosPlugin));
+    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
+        distro: retrotools_plugin_batocera_export::Distro::Batocera,
+    }));
+    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
+        distro: retrotools_plugin_batocera_export::Distro::Recalbox,
+    }));
+    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
+        distro: retrotools_plugin_batocera_export::Distro::Lakka,
+    }));
     registry
 }
 
@@ -1242,7 +1254,7 @@ fn run_plugin_command(command: PluginCommands) {
                 println!("  {}", plugin.description());
             }
         }
-        PluginCommands::Run { id, dat, output, source, profile } => {
+        PluginCommands::Run { id, dat, output, source, profile, dry_run } => {
             let gameset = match retrotools_core::dat::parse_dat_file(&dat) {
                 Ok(gameset) => gameset,
                 Err(err) => {
@@ -1268,6 +1280,7 @@ fn run_plugin_command(command: PluginCommands) {
                 kept_game_names: &kept_names,
                 source_dir: source.as_deref(),
                 output_dir: &output,
+                dry_run,
             };
 
             match registry.run(&id, &ctx) {

@@ -209,6 +209,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            dry_run: false,
         };
 
         let outcome = PlaylistPlugin.run(&ctx).unwrap();
@@ -235,6 +236,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            dry_run: false,
         };
 
         let outcome = PlaylistPlugin.run(&ctx).unwrap();

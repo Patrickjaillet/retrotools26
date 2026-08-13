@@ -146,6 +146,13 @@ pub fn managed_dat_dir_path() -> AppResult<PathBuf> {
     Ok(data_base_dir()?.join("dats"))
 }
 
+/// Per-plugin editable data (correspondence tables, cached lookups, etc.),
+/// one subfolder per plugin id so unrelated plugins never collide —
+/// e.g. `plugin_data_dir_path("batocera-export")`.
+pub fn plugin_data_dir_path(plugin_id: &str) -> AppResult<PathBuf> {
+    Ok(data_base_dir()?.join("plugins").join(plugin_id))
+}
+
 impl AppConfig {
     pub fn load() -> AppResult<Self> {
         let path = config_file_path()?;

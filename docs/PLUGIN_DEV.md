@@ -36,6 +36,7 @@ pub struct PluginContext<'a> {
     pub kept_game_names: &'a [String],
     pub source_dir: Option<&'a std::path::Path>,
     pub output_dir: &'a std::path::Path,
+    pub dry_run: bool,
 }
 
 pub struct PluginOutcome {
@@ -63,6 +64,11 @@ pub trait Plugin: Send + Sync {
   same as a normal `Result::Err`).
 - `run` returns `Err(String)` on failure — that message is shown to the user
   as-is (in a CLI `eprintln!` or a UI toast), so make it actionable.
+- `dry_run` is set when the caller wants a preview: a plugin whose work is
+  destructive (writes/copies/overwrites files) should check it and, when
+  true, compute and describe what it *would* do in `PluginOutcome.summary`
+  without touching disk — same contract as `fileops::execute_build`'s
+  `dry_run`. A plugin with nothing destructive to preview can ignore it.
 
 ## Writing a new plugin, step by step
 
@@ -109,7 +115,7 @@ From the CLI:
 
 ```bash
 retrotools-cli plugin list
-retrotools-cli plugin run <id> <dat-file> --output <dir> [--source <dir>] [--profile <name>]
+retrotools-cli plugin run <id> <dat-file> --output <dir> [--source <dir>] [--profile <name>] [--dry-run]
 ```
 
 From the UI: the **Plugins** tab lists every registered plugin with a `Run`
@@ -127,6 +133,29 @@ want needs one.
   `retrotools_core::match_scan`, the same functions the main 1G1R engine
   uses for ROMs. A good example of a plugin that reuses the core engine
   instead of reimplementing hashing/matching, and that needs `source_dir`.
+- **`retrotools-plugin-batocera-export`** (`crates/plugin-batocera-export`) —
+  copies an already-built 1G1R set into a `roms/<system>/` tree for
+  Batocera, Recalbox or Lakka, and (for the two EmulationStation-based
+  distros) merges a `<system>` entry into `es_systems.cfg` without
+  disturbing entries from previous exports. Registered as three separate
+  plugin ids (`export-batocera`/`export-recalbox`/`export-lakka`) sharing one
+  implementation parameterized by `Distro`, rather than one plugin with a
+  distro option — `PluginContext` has no generic "extra config" field, and
+  three discoverable ids keep `plugin list` self-explanatory. A good example
+  of a plugin honoring `ctx.dry_run` and of one with its own editable data
+  file (the platform → system-folder-name table, see below).
+
+### The Batocera/Recalbox/Lakka system table
+
+`retrotools-plugin-batocera-export` ships a small built-in table mapping
+common No-Intro/Redump platform names to the folder name each distribution
+expects (e.g. `Nintendo - Super Nintendo Entertainment System` → `snes`).
+It is **not** meant to be exhaustive — the table is written out as editable
+JSON the first time it's needed
+(`retrotools_common::config::plugin_data_dir_path("batocera-export")`
+`/systems.json`), and a platform missing from it still exports (under a
+slugified fallback folder name, clearly flagged in the outcome message)
+rather than failing outright.
 
 ## What's intentionally not shipped yet
 

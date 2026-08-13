@@ -17,6 +17,12 @@ pub struct PluginContext<'a> {
     pub source_dir: Option<&'a Path>,
     /// Where the plugin should write anything it produces.
     pub output_dir: &'a Path,
+    /// When true, a plugin must compute and report what it *would* do
+    /// (in `PluginOutcome.summary`) without touching the filesystem —
+    /// same contract as `retrotools_core::fileops::execute_build`'s
+    /// `dry_run`. Plugins that have nothing destructive to preview can
+    /// ignore this field.
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -121,6 +127,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            dry_run: false,
         };
 
         let outcome = registry.run("echo", &ctx).unwrap();
@@ -138,6 +145,7 @@ mod tests {
             kept_game_names: &kept,
             source_dir: None,
             output_dir: &output_dir,
+            dry_run: false,
         };
         assert!(registry.run("nope", &ctx).is_err());
     }

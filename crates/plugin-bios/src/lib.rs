@@ -111,6 +111,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: Some(&source_dir),
             output_dir: &output_dir,
+            dry_run: false,
         };
 
         let outcome = BiosPlugin.run(&ctx).unwrap();
@@ -132,6 +133,7 @@ mod tests {
             kept_game_names: &[],
             source_dir: None,
             output_dir: &output_dir,
+            dry_run: false,
         };
         assert!(BiosPlugin.run(&ctx).is_err());
         std::fs::remove_dir_all(&output_dir).ok();

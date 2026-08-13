@@ -44,6 +44,8 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
         );
     });
 
+    ui.checkbox(&mut state.plugin_dry_run, "Dry run (preview only, no filesystem change)");
+
     ui.add_space(16.0);
     ui.separator();
     ui.add_space(12.0);

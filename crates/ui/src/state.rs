@@ -13,6 +13,15 @@ fn default_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     let mut registry = retrotools_plugin_api::PluginRegistry::new();
     registry.register(Box::new(retrotools_plugin_playlists::PlaylistPlugin));
     registry.register(Box::new(retrotools_plugin_bios::BiosPlugin));
+    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
+        distro: retrotools_plugin_batocera_export::Distro::Batocera,
+    }));
+    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
+        distro: retrotools_plugin_batocera_export::Distro::Recalbox,
+    }));
+    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
+        distro: retrotools_plugin_batocera_export::Distro::Lakka,
+    }));
     registry
 }
 
@@ -124,6 +133,7 @@ pub struct AppState {
     pub plugin_registry: retrotools_plugin_api::PluginRegistry,
     pub plugin_source_dir: Option<PathBuf>,
     pub plugin_output_dir: Option<PathBuf>,
+    pub plugin_dry_run: bool,
     pub plugin_last_outcomes: HashMap<String, Result<String, String>>,
     pub new_dat_source_name: String,
     pub new_dat_source_url: String,
@@ -221,6 +231,7 @@ impl AppState {
             plugin_registry: default_plugin_registry(),
             plugin_source_dir: None,
             plugin_output_dir: None,
+            plugin_dry_run: false,
             plugin_last_outcomes: HashMap::new(),
             new_dat_source_name: String::new(),
             new_dat_source_url: String::new(),
@@ -431,6 +442,7 @@ impl AppState {
             kept_game_names: &kept_game_names,
             source_dir: self.plugin_source_dir.as_deref(),
             output_dir: &output_dir,
+            dry_run: self.plugin_dry_run,
         };
 
         let result = self.plugin_registry.run(plugin_id, &ctx);
