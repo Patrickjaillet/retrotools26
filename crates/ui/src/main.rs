@@ -15,10 +15,23 @@ fn main() -> eframe::Result<()> {
 
     tracing::info!("starting Retro Tools 2026 {}", retrotools_common::current_version());
 
+    // Raw 256x256 RGBA (no PNG container) generated alongside `assets/icon.ico`
+    // (which is what actually shows up in Explorer/the taskbar, embedded into
+    // the .exe by `build.rs`) — this one is only for the window's own
+    // title-bar/Alt+Tab icon, and decoding it is just a byte-length check, no
+    // image-parsing dependency needed.
+    const ICON_RGBA: &[u8] = include_bytes!("../assets/icon_256.rgba");
+    let icon = eframe::egui::IconData {
+        rgba: ICON_RGBA.to_vec(),
+        width: 256,
+        height: 256,
+    };
+
     let viewport = eframe::egui::ViewportBuilder::default()
         .with_inner_size([1280.0, 800.0])
         .with_min_inner_size([960.0, 600.0])
-        .with_title("Retro Tools 2026");
+        .with_title("Retro Tools 2026")
+        .with_icon(icon);
 
     let native_options = eframe::NativeOptions {
         viewport,

@@ -18,6 +18,9 @@ Thumbs.db
 *.log
 logs/
 
+# Generated installer/portable packages (build artifacts, not source)
+/packaging/output/
+
 ROADMAP.md
 CLAUDE.md
 .claude/

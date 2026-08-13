@@ -36,6 +36,14 @@ pub fn show(ui: &mut Ui) {
             ui.label(RichText::new("Repository").weak());
             ui.hyperlink("https://github.com/Patrickjaillet/retrotools26");
             ui.end_row();
+
+            ui.label(RichText::new("Mode").weak());
+            if retrotools_common::config::is_portable_mode() {
+                ui.label("Portable (settings/cache stored next to the executable)");
+            } else {
+                ui.label("Installed (settings/cache stored in the user profile)");
+            }
+            ui.end_row();
         });
 
     ui.add_space(20.0);

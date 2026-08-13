@@ -96,13 +96,19 @@ impl RetroToolsApp {
         egui_extras::install_image_loaders(&cc.egui_ctx);
 
         let config = AppConfig::load().unwrap_or_default();
+        let check_on_startup = config.check_updates_on_startup;
+
+        let mut state = AppState::new(config);
+        if check_on_startup {
+            state.check_for_updates();
+        }
 
         Self {
             active_tab: Tab::Dashboard,
             toasts: ToastManager::default(),
             theme_applied: false,
             applied_ui_scale: None,
-            state: AppState::new(config),
+            state,
         }
     }
 

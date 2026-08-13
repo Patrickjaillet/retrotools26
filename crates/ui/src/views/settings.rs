@@ -185,6 +185,38 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
     });
     ui.checkbox(&mut state.config.check_updates_on_startup, "Check for updates on startup");
 
+    ui.add_space(6.0);
+    ui.horizontal(|ui| {
+        ui.label("Update repository (owner/repo):");
+        let mut repo = state.config.update_repository.clone().unwrap_or_default();
+        if ui.text_edit_singleline(&mut repo).changed() {
+            state.config.update_repository = if repo.trim().is_empty() { None } else { Some(repo) };
+        }
+        let can_check = state.config.update_repository.is_some() && !state.checking_for_updates;
+        if ui.add_enabled(can_check, egui::Button::new("Check now")).clicked() {
+            state.check_for_updates();
+        }
+        if state.checking_for_updates {
+            ui.spinner();
+        }
+    });
+    ui.label(
+        RichText::new(
+            "Checks GitHub's public Releases API for this repository — no auth token needed. \
+             Leave empty to disable the check entirely.",
+        )
+        .weak()
+        .small(),
+    );
+    if let Some(update) = &state.available_update {
+        ui.add_space(4.0);
+        ui.label(
+            RichText::new(format!("Update available: {}", update.version))
+                .color(egui::Color32::from_rgb(76, 175, 80)),
+        );
+        ui.label(RichText::new(&update.download_url).weak().small());
+    }
+
     ui.add_space(20.0);
     if ui.button(state.t(Key::SaveSettingsButton)).clicked() {
         match state.config.save() {

@@ -19,6 +19,7 @@ tracing-subscriber.workspace = true
 tracing-appender.workspace = true
 directories.workspace = true
 chrono.workspace = true
+ureq.workspace = true
 time = "=0.3.36"
 
 [build-dependencies]

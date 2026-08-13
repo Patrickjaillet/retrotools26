@@ -50,6 +50,13 @@ struct Cli {
 enum Commands {
     Version,
     ConfigPath,
+    /// Check GitHub Releases for a newer version (uses the repository
+    /// configured via `dat` Settings.../ `update_repository` in config.toml)
+    CheckUpdate {
+        /// Override the configured "owner/repo" for this check
+        #[arg(long)]
+        repository: Option<String>,
+    },
     #[command(subcommand)]
     Dat(DatCommands),
     /// Scan a ROM directory, hash every file/archive entry found, and
@@ -277,6 +284,7 @@ fn main() {
                 Err(err) => eprintln!("error: {}", err),
             }
         }
+        Some(Commands::CheckUpdate { repository }) => run_check_update_command(repository),
         Some(Commands::Dat(dat_command)) => run_dat_command(dat_command),
         Some(Commands::Scan {
             root,
@@ -1179,6 +1187,34 @@ fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_playlists::PlaylistPlugin));
     registry.register(Box::new(retrotools_plugin_bios::BiosPlugin));
     registry
+}
+
+fn run_check_update_command(repository_override: Option<String>) {
+    let config = AppConfig::load().unwrap_or_default();
+    let Some(repository) = repository_override.or(config.update_repository) else {
+        eprintln!(
+            "error: no update repository configured; pass --repository owner/repo or set it in Settings"
+        );
+        return;
+    };
+
+    use retrotools_common::updater::{compare_versions, GitHubReleaseSource, UpdateSource, UpdateStatus};
+    let source = GitHubReleaseSource::new(repository);
+    match source.check_latest() {
+        Ok(Some(release)) => {
+            let current = current_version().version;
+            match compare_versions(current, &release.version) {
+                UpdateStatus::UpToDate => println!("up to date ({current})"),
+                UpdateStatus::UpdateAvailable(version) => {
+                    println!("update available: {current} -> {version}");
+                    println!("  {}", release.download_url);
+                }
+                UpdateStatus::CheckFailed => unreachable!("compare_versions never returns CheckFailed"),
+            }
+        }
+        Ok(None) => println!("no releases published yet"),
+        Err(err) => eprintln!("error: {err}"),
+    }
 }
 
 fn run_convert_command(command: ConvertCommands) {

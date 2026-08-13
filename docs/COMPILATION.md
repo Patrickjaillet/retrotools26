@@ -107,6 +107,57 @@ When packaging a release, copy `resources/` next to `retrotools2026.exe`
 and `retrotools-cli.exe` under `target/release/` (or wherever the installer
 places them) so the lookup above finds them.
 
-## Packaging (Windows installer)
+## Packaging (Windows installer & portable build)
 
-Installer packaging (MSI/EXE via WiX or Inno Setup) is introduced in a later development phase and will be documented here once available. It should copy `resources/` alongside the installed binaries.
+Two distribution forms are produced from the same release build, via
+scripts under `packaging/`:
+
+### Installer (Inno Setup)
+
+Requires [Inno Setup 7](https://www.innosetup.com) (`ISCC.exe`, the
+command-line compiler). Not installed by default — install it once
+(`choco install innosetup` or the official installer), then:
+
+```powershell
+cargo build --workspace --release
+& "C:\Program Files\Inno Setup 7\ISCC.exe" packaging\installer.iss
+```
+
+Produces `packaging\output\RetroTools2026-Setup-<version>.exe`: a
+per-user installer (no admin rights required — `PrivilegesRequired=lowest`)
+that copies `retrotools2026.exe`, `retrotools-cli.exe`, `resources\*.exe`,
+and the docs, and creates Start Menu/optional desktop shortcuts. It has
+been verified end-to-end on this project's dev machine with a real silent
+install/launch/uninstall cycle (`/VERYSILENT`), not just a successful
+compile.
+
+The installer is **unsigned** — no code-signing certificate is available in
+this environment, so Windows SmartScreen will warn on first run until
+either a certificate is obtained or the binary builds enough download
+reputation. That's a real, currently-unresolved gap, not an oversight.
+
+### Portable build
+
+```powershell
+cargo build --workspace --release
+powershell -ExecutionPolicy Bypass -File packaging\make_portable.ps1
+```
+
+Produces `packaging\output\RetroTools2026-Portable-<version>.zip`: the same
+binaries and `resources\` folder, plus a `portable.txt` marker file. Its
+mere presence next to `retrotools2026.exe` is what
+`retrotools_common::config::is_portable_mode()` checks — when found, every
+config/cache/log/DAT-library path resolves under `<exe_dir>\data\` instead
+of the per-user profile, so the whole folder can be moved, copied to a USB
+stick, or deleted without leaving anything behind on the host machine.
+Verified by actually running the packaged exe and confirming
+`data\config.toml` and `data\logs\` appear next to it.
+
+### Windows version compatibility
+
+Developed and tested on Windows 11 (build 10.0.26100). The code has no
+Windows-11-specific API calls (`eframe`/`egui`'s `glow` backend, `std::fs`,
+and `directories`/`ProjectDirs` are all supported back to Windows 7+), so it
+should run unmodified on Windows 10 (1809+) — but that has **not** been
+independently verified on an actual Windows 10 machine or VM in this
+environment; only Windows 11 has.

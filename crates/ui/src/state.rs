@@ -43,6 +43,10 @@ enum DatUpdateMessage {
     MissingDatDownloaded { platform_name: String, result: Result<PathBuf, String> },
 }
 
+enum AppUpdateMessage {
+    Checked(Result<Option<retrotools_common::updater::ReleaseInfo>, String>),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum StatusFilter {
     #[default]
@@ -133,6 +137,10 @@ pub struct AppState {
     pub command_palette_query: String,
     pub command_palette_selected: usize,
     pub missing_dat_platforms: Vec<String>,
+    pub available_update: Option<retrotools_common::updater::ReleaseInfo>,
+    pub checking_for_updates: bool,
+    app_update_tx: Sender<AppUpdateMessage>,
+    app_update_rx: Receiver<AppUpdateMessage>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -180,6 +188,7 @@ impl WizardStep {
 impl AppState {
     pub fn new(config: AppConfig) -> Self {
         let (dat_update_tx, dat_update_rx) = std::sync::mpsc::channel();
+        let (app_update_tx, app_update_rx) = std::sync::mpsc::channel();
         Self {
             config,
             library: DatLibrary::new(),
@@ -225,6 +234,10 @@ impl AppState {
             command_palette_query: String::new(),
             command_palette_selected: 0,
             missing_dat_platforms: Vec::new(),
+            available_update: None,
+            checking_for_updates: false,
+            app_update_tx,
+            app_update_rx,
         }
     }
 
@@ -359,6 +372,26 @@ impl AppState {
                 retrotools_core::download_dat(&source, &download_dir).map_err(|e| e.to_string())
             })();
             let _ = tx.send(DatUpdateMessage::MissingDatDownloaded { platform_name, result });
+        });
+    }
+
+    /// Checks GitHub Releases for a newer version in the background. A
+    /// no-op if `config.update_repository` isn't set (the app never guesses
+    /// a repository on its own) or a check is already in flight.
+    pub fn check_for_updates(&mut self) {
+        let Some(repository) = self.config.update_repository.clone() else {
+            return;
+        };
+        if self.checking_for_updates {
+            return;
+        }
+        self.checking_for_updates = true;
+        let tx = self.app_update_tx.clone();
+        std::thread::spawn(move || {
+            let source = retrotools_common::updater::GitHubReleaseSource::new(repository);
+            let result = retrotools_common::updater::UpdateSource::check_latest(&source)
+                .map_err(|e| e.to_string());
+            let _ = tx.send(AppUpdateMessage::Checked(result));
         });
     }
 
@@ -562,6 +595,27 @@ impl AppState {
 
     pub fn poll_jobs(&mut self) {
         self.check_background_triggers();
+        while let Ok(AppUpdateMessage::Checked(result)) = self.app_update_rx.try_recv() {
+            self.checking_for_updates = false;
+            match result {
+                Ok(Some(release)) => {
+                    let current = retrotools_common::current_version().version;
+                    if retrotools_common::updater::compare_versions(current, &release.version)
+                        != retrotools_common::updater::UpdateStatus::UpToDate
+                    {
+                        self.toast(
+                            ToastKind::Info,
+                            format!("Retro Tools 2026 {} is available (you have {current})", release.version),
+                        );
+                        self.available_update = Some(release);
+                    } else {
+                        self.available_update = None;
+                    }
+                }
+                Ok(None) => self.available_update = None,
+                Err(err) => tracing::warn!("update check failed: {err}"),
+            }
+        }
         while let Ok(message) = self.dat_update_rx.try_recv() {
             match message {
                 DatUpdateMessage::Done { name, result } => {
