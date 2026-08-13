@@ -7,6 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [Unreleased]
 
 ### Added
+- Replaced the two literal "Placeholder preview" mockups in `docs/screenshot1.png`/`screenshot2.png` with real captures of the running app (Dashboard and 1G1R Builder, with an actual DAT imported); corrected a stale claim in `docs/PLUGIN_DEV.md` that CHD conversion was unimplemented (it was added in Phase 7, `retrotools_core::convert`)
 - Real GitHub-Releases-backed auto-updater (`retrotools_common::updater::GitHubReleaseSource`): checks the public Releases API (no auth token needed) and compares versions; wired into the UI (startup check when `check_updates_on_startup` is on and a repository is configured in Settings, with a toast when an update is available) and the CLI (`check-update [--repository owner/repo]`); no repository is guessed by default (`AppConfig::update_repository` starts `None`)
 - Windows installer (`packaging/installer.iss`, Inno Setup 7): per-user install (no admin rights), bundles `resources/*.exe` and docs, Start Menu/desktop shortcuts; unsigned (no code-signing certificate available)
 - Portable build (`packaging/make_portable.ps1` + `retrotools_common::config::is_portable_mode()`): dropping a `portable.txt` marker next to the exe switches every config/cache/log/DAT path to `<exe_dir>/data/` instead of the per-user profile
