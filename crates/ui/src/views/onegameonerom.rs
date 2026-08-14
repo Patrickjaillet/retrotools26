@@ -19,6 +19,16 @@ fn format_duration_secs(total_secs: f64) -> String {
     }
 }
 
+/// No-Intro/Redump language codes offered in the 1G1R Builder's "Add..."
+/// dropdown, in addition to whatever the loaded DAT already tags games
+/// with — most DATs only tag the languages actually present, so without
+/// this the dropdown would often only ever offer "En".
+const STANDARD_LANGUAGE_CODES: &[&str] = &[
+    "En", "Ja", "Fr", "De", "Es", "It", "Nl", "Pt", "Sv", "No", "Da", "Fi", "Zh", "Ko", "Ru", "Pl",
+    "Cs", "Hu", "Tr", "El", "He", "Ar", "Ca", "Hr", "Sk", "Sl", "Bg", "Et", "Lv", "Lt", "Ro", "Uk",
+    "Vi", "Th", "Id", "Ms",
+];
+
 fn ordered_list_editor(
     ui: &mut Ui,
     id: &str,
@@ -361,6 +371,7 @@ fn rules_section(ui: &mut Ui, state: &mut AppState, gameset: &retrotools_core::G
         .games
         .iter()
         .flat_map(|g| g.languages.iter().map(|l| l.0.clone()))
+        .chain(STANDARD_LANGUAGE_CODES.iter().map(|s| s.to_string()))
         .collect();
 
     ui.columns(2, |columns| {

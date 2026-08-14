@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 - 1G1R Builder scan section now shows a progress bar with percentage complete and an estimated time remaining (based on the observed files/sec rate), instead of just a spinner and a raw file count — so it's clear when a long scan will actually finish. An indeterminate animated bar is shown before the first progress report arrives.
+- 1G1R Builder "Language priority" now always offers the standard set of No-Intro/Redump language codes (Fr, De, Es, Ja, ...) in its "Add..." dropdown, not just whatever languages happen to be tagged in the currently loaded DAT — most DATs only tag the languages actually present, so the list previously often only ever offered "En".
 
 ## [0.1.7] - 2026-08-14
 
