@@ -2,6 +2,23 @@ use crate::i18n::Key;
 use crate::state::{AppState, WizardStep};
 use egui::{RichText, ScrollArea, Ui};
 
+/// Formats a duration given in seconds as `Hh Mm Ss`, dropping leading
+/// zero units (`"45s"`, `"3m 05s"`, `"1h 02m"`) — used for the scan ETA,
+/// which is a rough estimate, so sub-second precision would be misleading.
+fn format_duration_secs(total_secs: f64) -> String {
+    let total_secs = total_secs.round().max(0.0) as u64;
+    let hours = total_secs / 3600;
+    let minutes = (total_secs % 3600) / 60;
+    let seconds = total_secs % 60;
+    if hours > 0 {
+        format!("{hours}h {minutes:02}m")
+    } else if minutes > 0 {
+        format!("{minutes}m {seconds:02}s")
+    } else {
+        format!("{seconds}s")
+    }
+}
+
 fn ordered_list_editor(
     ui: &mut Ui,
     id: &str,
@@ -197,6 +214,22 @@ fn scan_section(ui: &mut Ui, state: &mut AppState) {
             }
         }
     });
+
+    if state.scan_in_progress {
+        ui.add_space(4.0);
+        let fraction = state.scan_fraction();
+        let mut bar = egui::ProgressBar::new(fraction.unwrap_or(0.0)).desired_width(320.0);
+        bar = match (fraction, state.scan_eta_seconds()) {
+            (Some(f), Some(eta)) => bar.text(format!(
+                "{:.0}% — ~{} remaining",
+                f * 100.0,
+                format_duration_secs(eta)
+            )),
+            (Some(f), None) => bar.text(format!("{:.0}%", f * 100.0)),
+            (None, _) => bar.animate(true).text("Counting files..."),
+        };
+        ui.add(bar);
+    }
 
     ui.add_space(6.0);
     ui.horizontal(|ui| {
@@ -505,5 +538,34 @@ fn build_section(ui: &mut Ui, state: &mut AppState) {
     }
     if let Some(summary) = &state.last_build_summary {
         ui.label(summary);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formats_seconds_only_under_a_minute() {
+        assert_eq!(format_duration_secs(0.0), "0s");
+        assert_eq!(format_duration_secs(45.0), "45s");
+        assert_eq!(format_duration_secs(59.4), "59s");
+        assert_eq!(format_duration_secs(59.6), "1m 00s");
+    }
+
+    #[test]
+    fn formats_minutes_and_seconds() {
+        assert_eq!(format_duration_secs(65.0), "1m 05s");
+        assert_eq!(format_duration_secs(185.0), "3m 05s");
+    }
+
+    #[test]
+    fn formats_hours_and_minutes_dropping_seconds() {
+        assert_eq!(format_duration_secs(3723.0), "1h 02m");
+    }
+
+    #[test]
+    fn never_panics_on_negative_input() {
+        assert_eq!(format_duration_secs(-5.0), "0s");
     }
 }

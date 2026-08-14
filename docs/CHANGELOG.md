@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+- 1G1R Builder scan section now shows a progress bar with percentage complete and an estimated time remaining (based on the observed files/sec rate), instead of just a spinner and a raw file count — so it's clear when a long scan will actually finish. An indeterminate animated bar is shown before the first progress report arrives.
+
 ## [0.1.7] - 2026-08-14
 
 ### Fixed

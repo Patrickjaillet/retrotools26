@@ -764,6 +764,32 @@ impl AppState {
         ))
     }
 
+    /// Fraction of the scan completed so far (0.0-1.0), for a progress bar.
+    /// `None` before the first progress report arrives, or once the total
+    /// is known to be zero (nothing to divide by).
+    pub fn scan_fraction(&self) -> Option<f32> {
+        let progress = self.scan_progress.as_ref()?;
+        if progress.files_total == 0 {
+            return None;
+        }
+        Some((progress.files_scanned as f32 / progress.files_total as f32).clamp(0.0, 1.0))
+    }
+
+    /// Estimated remaining time for the scan in progress, in seconds, based
+    /// on the average files/sec rate observed so far. `None` until there's
+    /// a real rate to extrapolate from (no progress yet, or nothing scanned
+    /// yet at zero elapsed time) — a rough estimate, not a promise, since
+    /// remaining files may be larger/smaller/inside archives.
+    pub fn scan_eta_seconds(&self) -> Option<f64> {
+        let progress = self.scan_progress.as_ref()?;
+        let (files_per_sec, _) = self.scan_speed()?;
+        if files_per_sec <= 0.0 {
+            return None;
+        }
+        let remaining = progress.files_total.saturating_sub(progress.files_scanned);
+        Some(remaining as f64 / files_per_sec)
+    }
+
     pub fn start_scan(&mut self, root: PathBuf) {
         if self.scan_in_progress {
             return;
