@@ -15,6 +15,7 @@ enum Tab {
     OneGameOneRom,
     Plugins,
     Settings,
+    Download,
     About,
 }
 
@@ -27,6 +28,7 @@ impl Tab {
             Tab::OneGameOneRom => Key::Tab1g1r,
             Tab::Plugins => Key::TabPlugins,
             Tab::Settings => Key::TabSettings,
+            Tab::Download => Key::TabDownload,
             Tab::About => Key::TabAbout,
         };
         i18n::t(lang, key)
@@ -40,6 +42,7 @@ impl Tab {
             Tab::OneGameOneRom,
             Tab::Plugins,
             Tab::Settings,
+            Tab::Download,
             Tab::About,
         ]
     }
@@ -66,6 +69,7 @@ impl Command {
             Command::GoToTab(Tab::OneGameOneRom),
             Command::GoToTab(Tab::Plugins),
             Command::GoToTab(Tab::Settings),
+            Command::GoToTab(Tab::Download),
             Command::GoToTab(Tab::About),
             Command::ImportDat,
             Command::ToggleExpertMode,
@@ -196,7 +200,8 @@ impl RetroToolsApp {
             (Tab::OneGameOneRom, egui::Key::Num4),
             (Tab::Plugins, egui::Key::Num5),
             (Tab::Settings, egui::Key::Num6),
-            (Tab::About, egui::Key::Num7),
+            (Tab::Download, egui::Key::Num7),
+            (Tab::About, egui::Key::Num8),
         ] {
             if ctx.input_mut(|i| i.consume_key(egui::Modifiers::ALT, key)) {
                 self.active_tab = tab;
@@ -316,6 +321,7 @@ impl RetroToolsApp {
                     Tab::OneGameOneRom => views::onegameonerom::show(ui, &mut self.state),
                     Tab::Plugins => views::plugins::show(ui, &mut self.state),
                     Tab::Settings => views::settings::show(ui, &mut self.state),
+                    Tab::Download => views::download::show(ui),
                     Tab::About => views::about::show(ui),
                 }
             });

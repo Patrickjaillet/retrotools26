@@ -46,6 +46,7 @@ pub enum Key {
     Tab1g1r,
     TabPlugins,
     TabSettings,
+    TabDownload,
     TabAbout,
     DashboardTitle,
     DashboardPlatforms,
@@ -87,6 +88,9 @@ pub fn t(lang: Language, key: Key) -> &'static str {
 
         (En, TabSettings) => "Settings",
         (Fr, TabSettings) => "Paramètres",
+
+        (En, TabDownload) => "Download",
+        (Fr, TabDownload) => "Téléchargements",
 
         (En, TabAbout) => "About",
         (Fr, TabAbout) => "À propos",
@@ -170,6 +174,7 @@ mod tests {
             Key::Tab1g1r,
             Key::TabPlugins,
             Key::TabSettings,
+            Key::TabDownload,
             Key::TabAbout,
             Key::DashboardTitle,
             Key::DashboardPlatforms,

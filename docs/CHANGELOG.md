@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+- New "Download" tab (`crates/ui/src/views/download.rs`): official/community links for everything this app works with but doesn't bundle — DAT sources (No-Intro, Redump, TOSEC), frontends/distributions (Batocera, Recalbox, Lakka, EmulationStation-DE), RetroArch cores and shaders, RetroAchievements account creation, and the third-party RVZ/CSO conversion tools; deliberately excludes ROM download sites, with a visible note explaining why — this app manages ROMs you already own, it doesn't point at copyright-infringing sources
+
 ## [0.1.2] - 2026-08-14
 
 Adds the "Modules Futurs Retrogaming" batch (Phases 11-20): Batocera/

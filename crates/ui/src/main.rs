@@ -89,6 +89,7 @@ mod ui_smoke_tests {
             run_frame(&ctx, |ui| views::onegameonerom::show(ui, &mut state));
             run_frame(&ctx, |ui| views::plugins::show(ui, &mut state));
             run_frame(&ctx, |ui| views::settings::show(ui, &mut state));
+            run_frame(&ctx, views::download::show);
             run_frame(&ctx, views::about::show);
         }
     }
