@@ -17,12 +17,16 @@ pub struct RetroAchievementsClient {
 
 impl RetroAchievementsClient {
     pub fn new() -> Self {
-        Self { base_url: "https://retroachievements.org/API".to_string() }
+        Self {
+            base_url: "https://retroachievements.org/API".to_string(),
+        }
     }
 
     #[cfg(test)]
     pub fn with_base_url(base_url: impl Into<String>) -> Self {
-        Self { base_url: base_url.into() }
+        Self {
+            base_url: base_url.into(),
+        }
     }
 
     /// Fetches every known hash for every game on one console
@@ -31,7 +35,11 @@ impl RetroAchievementsClient {
     /// this MD5 known-compatible", not a per-game breakdown, so a flat set
     /// is enough and much simpler to cache/consume than the nested
     /// title→hashes structure the API actually returns.
-    pub fn fetch_console_hashes(&self, creds: &Credentials, console_id: u32) -> Result<HashSet<String>, (String, bool)> {
+    pub fn fetch_console_hashes(
+        &self,
+        creds: &Credentials,
+        console_id: u32,
+    ) -> Result<HashSet<String>, (String, bool)> {
         let url = format!(
             "{}/API_GetGameList.php?z={}&y={}&i={}&h=1",
             self.base_url,
@@ -40,9 +48,13 @@ impl RetroAchievementsClient {
             console_id,
         );
 
-        let response = ureq::get(&url).timeout(Duration::from_secs(20)).call().map_err(|err| classify_error(&err))?;
+        let response = ureq::get(&url)
+            .timeout(Duration::from_secs(20))
+            .call()
+            .map_err(|err| classify_error(&err))?;
         let body = response.into_string().map_err(|e| (e.to_string(), false))?;
-        let json: serde_json::Value = serde_json::from_str(&body).map_err(|e| (format!("malformed RetroAchievements response: {e}"), false))?;
+        let json: serde_json::Value = serde_json::from_str(&body)
+            .map_err(|e| (format!("malformed RetroAchievements response: {e}"), false))?;
         Ok(parse_hashes(&json))
     }
 }
@@ -57,9 +69,15 @@ fn classify_error(err: &ureq::Error) -> (String, bool) {
     match err {
         ureq::Error::Status(code, _) => {
             let transient = *code == 429 || *code >= 500;
-            (format!("RetroAchievements request failed with status {code}"), transient)
+            (
+                format!("RetroAchievements request failed with status {code}"),
+                transient,
+            )
         }
-        ureq::Error::Transport(transport) => (format!("RetroAchievements request failed: {transport}"), true),
+        ureq::Error::Transport(transport) => (
+            format!("RetroAchievements request failed: {transport}"),
+            true,
+        ),
     }
 }
 
@@ -84,7 +102,9 @@ fn urlencode(value: &str) -> String {
     let mut out = String::new();
     for byte in value.bytes() {
         match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(byte as char),
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(byte as char)
+            }
             _ => out.push_str(&format!("%{byte:02X}")),
         }
     }
@@ -115,7 +135,10 @@ mod tests {
     }
 
     fn creds() -> Credentials {
-        Credentials { username: "player1".into(), api_key: "secret-key".into() }
+        Credentials {
+            username: "player1".into(),
+            api_key: "secret-key".into(),
+        }
     }
 
     #[test]

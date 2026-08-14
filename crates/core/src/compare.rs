@@ -62,7 +62,10 @@ pub fn compare_scans(before: &[ScannedRom], after: &[ScannedRom]) -> SetComparis
     let mut changed = Vec::new();
     let mut added = Vec::new();
     for entry in candidate_added.drain(..) {
-        if let Some(pos) = candidate_removed.iter().position(|r| r.file_name == entry.file_name) {
+        if let Some(pos) = candidate_removed
+            .iter()
+            .position(|r| r.file_name == entry.file_name)
+        {
             let before_entry = candidate_removed.remove(pos);
             changed.push((before_entry.clone(), entry.clone()));
         } else {

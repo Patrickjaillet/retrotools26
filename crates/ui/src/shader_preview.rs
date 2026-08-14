@@ -28,7 +28,12 @@ impl PreviewKind {
             PreviewKind::Crt
         } else if lower.contains("scanline") {
             PreviewKind::Scanline
-        } else if lower.contains("scale") || lower.contains("hq") || lower.contains("edge") || lower.contains("xbr") || lower.contains("sabr") {
+        } else if lower.contains("scale")
+            || lower.contains("hq")
+            || lower.contains("edge")
+            || lower.contains("xbr")
+            || lower.contains("sabr")
+        {
             PreviewKind::Upscaler
         } else {
             PreviewKind::Generic
@@ -46,7 +51,10 @@ const BASE_COLORS: [Color32; 4] = [
 fn draw_base_pattern(painter: &egui::Painter, rect: Rect) {
     let cell_w = rect.width() / 4.0;
     for (i, color) in BASE_COLORS.iter().enumerate() {
-        let cell = Rect::from_min_size(rect.min + Vec2::new(cell_w * i as f32, 0.0), Vec2::new(cell_w, rect.height()));
+        let cell = Rect::from_min_size(
+            rect.min + Vec2::new(cell_w * i as f32, 0.0),
+            Vec2::new(cell_w, rect.height()),
+        );
         painter.rect_filled(cell, Rounding::ZERO, *color);
     }
 }
@@ -54,7 +62,14 @@ fn draw_base_pattern(painter: &egui::Painter, rect: Rect) {
 fn draw_scanlines(painter: &egui::Painter, rect: Rect) {
     let mut y = rect.top();
     while y < rect.bottom() {
-        painter.rect_filled(Rect::from_min_max(egui::pos2(rect.left(), y), egui::pos2(rect.right(), (y + 1.5).min(rect.bottom()))), Rounding::ZERO, Color32::from_black_alpha(110));
+        painter.rect_filled(
+            Rect::from_min_max(
+                egui::pos2(rect.left(), y),
+                egui::pos2(rect.right(), (y + 1.5).min(rect.bottom())),
+            ),
+            Rounding::ZERO,
+            Color32::from_black_alpha(110),
+        );
         y += 3.0;
     }
 }
@@ -62,9 +77,19 @@ fn draw_scanlines(painter: &egui::Painter, rect: Rect) {
 fn draw_vignette(painter: &egui::Painter, rect: Rect) {
     let corner = Vec2::new(rect.width() * 0.18, rect.height() * 0.28);
     for (dx, dy) in [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)] {
-        let anchor = egui::pos2(rect.left() + dx * rect.width(), rect.top() + dy * rect.height());
-        let offset = Vec2::new(if dx > 0.0 { -corner.x } else { corner.x }, if dy > 0.0 { -corner.y } else { corner.y });
-        painter.rect_filled(Rect::from_two_pos(anchor, anchor + offset), Rounding::ZERO, Color32::from_black_alpha(70));
+        let anchor = egui::pos2(
+            rect.left() + dx * rect.width(),
+            rect.top() + dy * rect.height(),
+        );
+        let offset = Vec2::new(
+            if dx > 0.0 { -corner.x } else { corner.x },
+            if dy > 0.0 { -corner.y } else { corner.y },
+        );
+        painter.rect_filled(
+            Rect::from_two_pos(anchor, anchor + offset),
+            Rounding::ZERO,
+            Color32::from_black_alpha(70),
+        );
     }
 }
 
@@ -77,12 +102,19 @@ fn draw_upscaler_hint(painter: &egui::Painter, rect: Rect) {
     let mut toggle = false;
     while x < mid {
         if toggle {
-            painter.rect_filled(Rect::from_min_size(egui::pos2(x, rect.top()), Vec2::new(block, rect.height())), Rounding::ZERO, Color32::from_black_alpha(60));
+            painter.rect_filled(
+                Rect::from_min_size(egui::pos2(x, rect.top()), Vec2::new(block, rect.height())),
+                Rounding::ZERO,
+                Color32::from_black_alpha(60),
+            );
         }
         x += block;
         toggle = !toggle;
     }
-    painter.line_segment([egui::pos2(mid, rect.top()), egui::pos2(mid, rect.bottom())], (1.5, Color32::WHITE));
+    painter.line_segment(
+        [egui::pos2(mid, rect.top()), egui::pos2(mid, rect.bottom())],
+        (1.5, Color32::WHITE),
+    );
 }
 
 /// Draws a `size.x`x`size.y` static reference preview for a preset file
@@ -111,21 +143,36 @@ mod tests {
 
     #[test]
     fn classifies_crt_before_scanline_when_both_keywords_present() {
-        assert_eq!(PreviewKind::classify("crt-geom-scanline.slangp"), PreviewKind::Crt);
+        assert_eq!(
+            PreviewKind::classify("crt-geom-scanline.slangp"),
+            PreviewKind::Crt
+        );
     }
 
     #[test]
     fn classifies_known_shader_families() {
         assert_eq!(PreviewKind::classify("crt-geom.slangp"), PreviewKind::Crt);
-        assert_eq!(PreviewKind::classify("scanlines-sharp.slangp"), PreviewKind::Scanline);
-        assert_eq!(PreviewKind::classify("scale2x.slangp"), PreviewKind::Upscaler);
+        assert_eq!(
+            PreviewKind::classify("scanlines-sharp.slangp"),
+            PreviewKind::Scanline
+        );
+        assert_eq!(
+            PreviewKind::classify("scale2x.slangp"),
+            PreviewKind::Upscaler
+        );
         assert_eq!(PreviewKind::classify("hq4x.slangp"), PreviewKind::Upscaler);
-        assert_eq!(PreviewKind::classify("xbr-lv3.slangp"), PreviewKind::Upscaler);
+        assert_eq!(
+            PreviewKind::classify("xbr-lv3.slangp"),
+            PreviewKind::Upscaler
+        );
     }
 
     #[test]
     fn falls_back_to_generic_for_an_unrecognized_name() {
-        assert_eq!(PreviewKind::classify("my-custom-preset.slangp"), PreviewKind::Generic);
+        assert_eq!(
+            PreviewKind::classify("my-custom-preset.slangp"),
+            PreviewKind::Generic
+        );
     }
 
     #[test]

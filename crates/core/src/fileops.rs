@@ -79,7 +79,11 @@ fn find_game<'a>(gameset: &'a GameSet, name: &str) -> Option<&'a crate::model::G
 /// selection expressed by `match_report.matched` under `options`. Only
 /// entries already confirmed to match the DAT are planned — corrupt/unknown
 /// files are never moved automatically.
-pub fn plan_build(gameset: &GameSet, match_report: &MatchReport, options: &BuildOptions) -> Vec<PlannedTransfer> {
+pub fn plan_build(
+    gameset: &GameSet,
+    match_report: &MatchReport,
+    options: &BuildOptions,
+) -> Vec<PlannedTransfer> {
     let mut plans = Vec::with_capacity(match_report.matched.len());
 
     for rom_match in &match_report.matched {
@@ -110,7 +114,9 @@ pub fn plan_build(gameset: &GameSet, match_report: &MatchReport, options: &Build
         };
 
         let is_archived = rom_match.scanned.archive_entry.is_some();
-        let (mode, downgraded_from) = if is_archived && matches!(options.mode, TransferMode::HardLink | TransferMode::SymLink) {
+        let (mode, downgraded_from) = if is_archived
+            && matches!(options.mode, TransferMode::HardLink | TransferMode::SymLink)
+        {
             (TransferMode::Copy, Some(options.mode))
         } else {
             (options.mode, None)
@@ -145,11 +151,12 @@ fn transfer_one(plan: &PlannedTransfer) -> AppResult<()> {
             std::fs::copy(&plan.source, &plan.destination).map_err(AppError::Io)?;
         }
         TransferMode::Move => {
-            std::fs::rename(&plan.source, &plan.destination).or_else(|_| {
-                std::fs::copy(&plan.source, &plan.destination)
-                    .and_then(|_| std::fs::remove_file(&plan.source))
-            })
-            .map_err(AppError::Io)?;
+            std::fs::rename(&plan.source, &plan.destination)
+                .or_else(|_| {
+                    std::fs::copy(&plan.source, &plan.destination)
+                        .and_then(|_| std::fs::remove_file(&plan.source))
+                })
+                .map_err(AppError::Io)?;
         }
         TransferMode::HardLink => {
             std::fs::hard_link(&plan.source, &plan.destination).map_err(AppError::Io)?;
@@ -177,10 +184,12 @@ fn verify_transfer(plan: &PlannedTransfer) -> AppResult<bool> {
     if let Some(entry_name) = &plan.archive_entry {
         let kind = archive::detect_archive_kind(&plan.source)?;
         let source_hash = archive::hash_entry(&plan.source, kind, entry_name)?;
-        Ok(dest_hash.full.crc32 == source_hash.full.crc32 && dest_hash.full.size == source_hash.full.size)
+        Ok(dest_hash.full.crc32 == source_hash.full.crc32
+            && dest_hash.full.size == source_hash.full.size)
     } else {
         let source_hash = compute_hashes_for_file(&plan.source)?;
-        Ok(dest_hash.full.crc32 == source_hash.full.crc32 && dest_hash.full.size == source_hash.full.size)
+        Ok(dest_hash.full.crc32 == source_hash.full.crc32
+            && dest_hash.full.size == source_hash.full.size)
     }
 }
 
@@ -232,7 +241,12 @@ pub fn execute_build(
                 };
 
                 if let (Some(log), Some(batch_id)) = (undo_log, &batch_id) {
-                    let _ = log.record(batch_id, plan.mode.as_log_kind(), &plan.source, &plan.destination);
+                    let _ = log.record(
+                        batch_id,
+                        plan.mode.as_log_kind(),
+                        &plan.source,
+                        &plan.destination,
+                    );
                 }
 
                 outcomes.push(TransferOutcome {
@@ -275,11 +289,9 @@ pub fn safe_delete(
         dest = trash_root.join(format!("{file_name}.{suffix}"));
     }
 
-    std::fs::rename(path, &dest).or_else(|_| {
-        std::fs::copy(path, &dest)
-            .and_then(|_| std::fs::remove_file(path))
-    })
-    .map_err(AppError::Io)?;
+    std::fs::rename(path, &dest)
+        .or_else(|_| std::fs::copy(path, &dest).and_then(|_| std::fs::remove_file(path)))
+        .map_err(AppError::Io)?;
 
     if let Some((log, batch_id)) = undo_log {
         let _ = log.record(batch_id, "delete", path, &dest);
@@ -298,7 +310,8 @@ mod tests {
     use crate::scan::ScannedRom;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-fileops-test-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-fileops-test-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -352,7 +365,10 @@ mod tests {
         assert_eq!(plans.len(), 1);
         assert_eq!(
             plans[0].destination,
-            dest_root.join("Test").join("Europe").join("Game A (Europe).bin")
+            dest_root
+                .join("Test")
+                .join("Europe")
+                .join("Game A (Europe).bin")
         );
 
         let (outcomes, _) = execute_build(&plans, false, true, None, "test").unwrap();
@@ -477,9 +493,17 @@ mod tests {
 
         let scan_list = vec![scanned];
         let match_report = match_scan(&gameset_for_platform, &scan_list);
-        assert_eq!(match_report.matched.len(), 1, "sample should still match by CRC32");
+        assert_eq!(
+            match_report.matched.len(),
+            1,
+            "sample should still match by CRC32"
+        );
 
-        for organize in [OrganizeBy::Flat, OrganizeBy::ByPlatform, OrganizeBy::ByPlatformAndRegion] {
+        for organize in [
+            OrganizeBy::Flat,
+            OrganizeBy::ByPlatform,
+            OrganizeBy::ByPlatformAndRegion,
+        ] {
             let options = BuildOptions {
                 destination_root: dest_root.clone(),
                 mode: TransferMode::Copy,
@@ -545,12 +569,28 @@ mod tests {
             downgraded_from: None,
         };
 
-        let (outcomes, _) = execute_build(&[good_plan, bad_plan], false, false, None, "partial failure test").unwrap();
+        let (outcomes, _) = execute_build(
+            &[good_plan, bad_plan],
+            false,
+            false,
+            None,
+            "partial failure test",
+        )
+        .unwrap();
         assert_eq!(outcomes.len(), 2);
-        assert!(outcomes[0].performed, "the valid transfer should still succeed");
+        assert!(
+            outcomes[0].performed,
+            "the valid transfer should still succeed"
+        );
         assert!(outcomes[0].error.is_none());
-        assert!(!outcomes[1].performed, "the blocked transfer should fail, not panic");
-        assert!(outcomes[1].error.is_some(), "the failure should be reported as a typed error");
+        assert!(
+            !outcomes[1].performed,
+            "the blocked transfer should fail, not panic"
+        );
+        assert!(
+            outcomes[1].error.is_some(),
+            "the failure should be reported as a typed error"
+        );
 
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -560,7 +600,10 @@ mod tests {
         assert_eq!(sanitize_component("../../evil"), ".._.._evil");
         assert_eq!(sanitize_component("..\\..\\evil"), ".._.._evil");
         assert_eq!(sanitize_component(".."), "");
-        assert_eq!(sanitize_component("C:\\Windows\\System32"), "C__Windows_System32");
+        assert_eq!(
+            sanitize_component("C:\\Windows\\System32"),
+            "C__Windows_System32"
+        );
         assert_eq!(sanitize_component("normal-name.bin"), "normal-name.bin");
     }
 }

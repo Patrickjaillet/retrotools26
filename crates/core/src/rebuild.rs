@@ -29,13 +29,21 @@ fn write_zip(archive_path: &Path, roms: &[&crate::matcher::RomMatch]) -> AppResu
             .unwrap_or_else(|| rom_match.scanned.file_name.clone());
         writer
             .start_file(&entry_name, zip::write::FileOptions::default())
-            .map_err(|e| AppError::FileOperation(format!("cannot add '{entry_name}' to archive: {e}")))?;
+            .map_err(|e| {
+                AppError::FileOperation(format!("cannot add '{entry_name}' to archive: {e}"))
+            })?;
 
         if let Some(source_entry) = &rom_match.scanned.archive_entry {
             let kind = archive::detect_archive_kind(&rom_match.scanned.source_path)?;
-            archive::extract_entry(&rom_match.scanned.source_path, kind, source_entry, &mut writer)?;
+            archive::extract_entry(
+                &rom_match.scanned.source_path,
+                kind,
+                source_entry,
+                &mut writer,
+            )?;
         } else {
-            let mut src = std::fs::File::open(&rom_match.scanned.source_path).map_err(AppError::Io)?;
+            let mut src =
+                std::fs::File::open(&rom_match.scanned.source_path).map_err(AppError::Io)?;
             std::io::copy(&mut src, &mut writer).map_err(AppError::Io)?;
         }
     }
@@ -118,7 +126,8 @@ mod tests {
 </datafile>"#;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-rebuild-test-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-rebuild-test-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -149,7 +158,8 @@ mod tests {
         assert_eq!(match_report.matched.len(), 1);
 
         let dest = dir.join("out");
-        let outcomes = rebuild_to_archives(&match_report, &dest, RebuildFormat::Zip, false).unwrap();
+        let outcomes =
+            rebuild_to_archives(&match_report, &dest, RebuildFormat::Zip, false).unwrap();
         assert_eq!(outcomes.len(), 1);
         assert!(outcomes[0].error.is_none());
         assert!(outcomes[0].archive_path.exists());

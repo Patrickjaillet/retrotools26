@@ -22,7 +22,11 @@ impl RateLimiter {
     }
 
     #[cfg(test)]
-    pub fn with_sleep_fn(min_interval: Duration, max_retries: u32, sleep_fn: impl Fn(Duration) + Send + Sync + 'static) -> Self {
+    pub fn with_sleep_fn(
+        min_interval: Duration,
+        max_retries: u32,
+        sleep_fn: impl Fn(Duration) + Send + Sync + 'static,
+    ) -> Self {
         Self {
             min_interval,
             max_retries,
@@ -81,7 +85,11 @@ mod tests {
             Err(("still failing".to_string(), true))
         });
         assert!(result.is_err());
-        assert_eq!(calls.load(Ordering::SeqCst), 3, "1 initial attempt + 2 retries");
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            3,
+            "1 initial attempt + 2 retries"
+        );
     }
 
     #[test]
@@ -113,6 +121,10 @@ mod tests {
         });
         let _ = limiter.run(|| Ok::<_, (String, bool)>(()));
         let _ = limiter.run(|| Ok::<_, (String, bool)>(()));
-        assert_eq!(sleeps.load(Ordering::SeqCst), 1, "second call should wait, first should not");
+        assert_eq!(
+            sleeps.load(Ordering::SeqCst),
+            1,
+            "second call should wait, first should not"
+        );
     }
 }

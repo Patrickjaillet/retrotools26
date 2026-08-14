@@ -17,10 +17,12 @@ fn decrypt_credentials(creds: &ScreenScraperCredentials) -> Result<Credentials, 
     use retrotools_common::secrets::decrypt_from_base64;
     Ok(Credentials {
         dev_id: decrypt_from_base64(&creds.dev_id_encrypted).map_err(|e| e.to_string())?,
-        dev_password: decrypt_from_base64(&creds.dev_password_encrypted).map_err(|e| e.to_string())?,
+        dev_password: decrypt_from_base64(&creds.dev_password_encrypted)
+            .map_err(|e| e.to_string())?,
         software_name: creds.software_name.clone(),
         user_id: decrypt_from_base64(&creds.user_id_encrypted).map_err(|e| e.to_string())?,
-        user_password: decrypt_from_base64(&creds.user_password_encrypted).map_err(|e| e.to_string())?,
+        user_password: decrypt_from_base64(&creds.user_password_encrypted)
+            .map_err(|e| e.to_string())?,
     })
 }
 
@@ -93,7 +95,10 @@ impl Plugin for ScraperPlugin {
         let gamelist_path = ctx.output_dir.join("gamelist.xml");
 
         if ctx.dry_run {
-            let with_hash = targets.iter().filter(|g| g.roms.first().and_then(|r| r.crc32.as_ref()).is_some()).count();
+            let with_hash = targets
+                .iter()
+                .filter(|g| g.roms.first().and_then(|r| r.crc32.as_ref()).is_some())
+                .count();
             return Ok(PluginOutcome {
                 summary: format!(
                     "[dry run] would look up {} game(s) on ScreenScraper.fr ({} have a usable hash), writing media into '{}' and updating '{}'",
@@ -145,7 +150,13 @@ impl Plugin for ScraperPlugin {
 
             let game_slug = slugify(&game.name);
             let mut entry = GamelistEntry {
-                rom_path: format!("./{}", game.roms.first().map(|r| r.name.as_str()).unwrap_or(&game.name)),
+                rom_path: format!(
+                    "./{}",
+                    game.roms
+                        .first()
+                        .map(|r| r.name.as_str())
+                        .unwrap_or(&game.name)
+                ),
                 name: media.name.clone().unwrap_or_else(|| game.name.clone()),
                 genre: media.genre.clone(),
                 release_year: media.release_year.clone(),
@@ -153,12 +164,17 @@ impl Plugin for ScraperPlugin {
             };
 
             for (kind, url) in media.media_urls() {
-                let extension = url.rsplit('.').next().filter(|e| e.len() <= 4).unwrap_or("bin");
+                let extension = url
+                    .rsplit('.')
+                    .next()
+                    .filter(|e| e.len() <= 4)
+                    .unwrap_or("bin");
                 let dest = media_dir.join(format!("{game_slug}-{kind}.{extension}"));
                 match cache::download_if_missing(url, &dest) {
                     Ok(_) => {
                         files_written.push(dest.clone());
-                        let relative = format!("./media/{platform_slug}/{game_slug}-{kind}.{extension}");
+                        let relative =
+                            format!("./media/{platform_slug}/{game_slug}-{kind}.{extension}");
                         match kind {
                             "box-art" => entry.image = Some(relative),
                             "video" => entry.video = Some(relative),
@@ -182,13 +198,23 @@ impl Plugin for ScraperPlugin {
 
         let mut summary = format!("scraped {found} game(s), {not_found} not found on ScreenScraper, {skipped_no_hash} skipped (no hash)");
         if purged > 0 {
-            summary.push_str(&format!(", purged {purged} old cached media file(s) to stay under the {}MB limit", config.scraper_cache_limit_mb));
+            summary.push_str(&format!(
+                ", purged {purged} old cached media file(s) to stay under the {}MB limit",
+                config.scraper_cache_limit_mb
+            ));
         }
         if !errors.is_empty() {
-            summary.push_str(&format!(" — {} error(s): {}", errors.len(), errors.join("; ")));
+            summary.push_str(&format!(
+                " — {} error(s): {}",
+                errors.len(),
+                errors.join("; ")
+            ));
         }
 
-        Ok(PluginOutcome { summary, files_written })
+        Ok(PluginOutcome {
+            summary,
+            files_written,
+        })
     }
 }
 
@@ -240,7 +266,10 @@ mod tests {
     }
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-scraper-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-plugin-scraper-test-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -258,7 +287,10 @@ mod tests {
             dry_run: false,
         };
         let err = ScraperPlugin.run(&ctx).unwrap_err();
-        assert!(err.contains("Settings"), "error should point the user at Settings, got: {err}");
+        assert!(
+            err.contains("Settings"),
+            "error should point the user at Settings, got: {err}"
+        );
         std::fs::remove_dir_all(&output).ok();
     }
 

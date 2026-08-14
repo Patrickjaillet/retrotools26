@@ -104,7 +104,10 @@ fn build_launchbox_xml(platform: &str, games: &[&Game]) -> String {
             "    <ApplicationPath>{}</ApplicationPath>\n",
             xml_escape(&rom_path_for(game))
         ));
-        out.push_str(&format!("    <Platform>{}</Platform>\n", xml_escape(platform)));
+        out.push_str(&format!(
+            "    <Platform>{}</Platform>\n",
+            xml_escape(platform)
+        ));
         out.push_str("  </Game>\n");
     }
     out.push_str("</LaunchBox>\n");
@@ -115,7 +118,10 @@ fn build_esde_gamelist(games: &[&Game]) -> String {
     let mut out = String::from("<?xml version=\"1.0\"?>\n<gameList>\n");
     for game in games {
         out.push_str("  <game>\n");
-        out.push_str(&format!("    <path>./{}</path>\n", xml_escape(&rom_path_for(game))));
+        out.push_str(&format!(
+            "    <path>./{}</path>\n",
+            xml_escape(&rom_path_for(game))
+        ));
         out.push_str(&format!("    <name>{}</name>\n", xml_escape(&game.name)));
         out.push_str("  </game>\n");
     }
@@ -155,15 +161,21 @@ impl Plugin for PlaylistPlugin {
         let lpl_path = ctx
             .output_dir
             .join(format!("{}.lpl", sanitize_component(&ctx.gameset.platform)));
-        std::fs::write(&lpl_path, build_retroarch_playlist(&ctx.gameset.platform, &games))
-            .map_err(|e| e.to_string())?;
+        std::fs::write(
+            &lpl_path,
+            build_retroarch_playlist(&ctx.gameset.platform, &games),
+        )
+        .map_err(|e| e.to_string())?;
         files_written.push(lpl_path);
 
         let launchbox_path = ctx
             .output_dir
             .join(format!("{}.xml", sanitize_component(&ctx.gameset.platform)));
-        std::fs::write(&launchbox_path, build_launchbox_xml(&ctx.gameset.platform, &games))
-            .map_err(|e| e.to_string())?;
+        std::fs::write(
+            &launchbox_path,
+            build_launchbox_xml(&ctx.gameset.platform, &games),
+        )
+        .map_err(|e| e.to_string())?;
         files_written.push(launchbox_path);
 
         let esde_path: PathBuf = ctx.output_dir.join("gamelist.xml");
@@ -216,7 +228,10 @@ fn write_or_merge_collection(path: &std::path::Path, lines: &[String]) -> Result
     Ok(true)
 }
 
-fn group_by<'a, K: Ord + Clone>(games: &[&'a Game], key: impl Fn(&Game) -> Option<K>) -> std::collections::BTreeMap<K, Vec<&'a Game>> {
+fn group_by<'a, K: Ord + Clone>(
+    games: &[&'a Game],
+    key: impl Fn(&Game) -> Option<K>,
+) -> std::collections::BTreeMap<K, Vec<&'a Game>> {
     let mut groups: std::collections::BTreeMap<K, Vec<&Game>> = std::collections::BTreeMap::new();
     for game in games {
         if let Some(k) = key(game) {
@@ -231,9 +246,13 @@ fn group_by<'a, K: Ord + Clone>(games: &[&'a Game], key: impl Fn(&Game) -> Optio
 /// full XML parser for content this crate's own sibling plugin generates)
 /// and returns, per ROM path, its genre and release year if the scraper
 /// found them.
-fn read_scraped_metadata(gamelist_path: &std::path::Path) -> std::collections::HashMap<String, (Option<String>, Option<String>)> {
+fn read_scraped_metadata(
+    gamelist_path: &std::path::Path,
+) -> std::collections::HashMap<String, (Option<String>, Option<String>)> {
     let mut out = std::collections::HashMap::new();
-    let Ok(text) = std::fs::read_to_string(gamelist_path) else { return out };
+    let Ok(text) = std::fs::read_to_string(gamelist_path) else {
+        return out;
+    };
     for block in text.split("<game>").skip(1) {
         let block = block.split("</game>").next().unwrap_or(block);
         let path = extract_tag(block, "path");
@@ -255,7 +274,11 @@ fn extract_tag(block: &str, tag: &str) -> Option<String> {
 }
 
 fn xml_unescape(value: &str) -> String {
-    value.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"")
+    value
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
 }
 
 /// Generates EmulationStation/ES-DE "custom collection" `.cfg` files
@@ -296,27 +319,51 @@ impl Plugin for CollectionsPlugin {
 
         for (region, region_games) in group_by(&games, |g| g.regions.first().map(|r| r.0.clone())) {
             plan.push((
-                format!("custom-by-region-{}.cfg", sanitize_component(&region).to_lowercase()),
-                region_games.iter().map(|g| collection_line_for(g)).collect(),
+                format!(
+                    "custom-by-region-{}.cfg",
+                    sanitize_component(&region).to_lowercase()
+                ),
+                region_games
+                    .iter()
+                    .map(|g| collection_line_for(g))
+                    .collect(),
             ));
         }
-        for (language, lang_games) in group_by(&games, |g| g.languages.first().map(|l| l.0.clone())) {
+        for (language, lang_games) in group_by(&games, |g| g.languages.first().map(|l| l.0.clone()))
+        {
             plan.push((
-                format!("custom-by-language-{}.cfg", sanitize_component(&language).to_lowercase()),
+                format!(
+                    "custom-by-language-{}.cfg",
+                    sanitize_component(&language).to_lowercase()
+                ),
                 lang_games.iter().map(|g| collection_line_for(g)).collect(),
             ));
         }
         if !scraped.is_empty() {
-            let genre_groups = group_by(&games, |g| scraped.get(&format!("./{}", rom_path_for(g))).and_then(|(genre, _)| genre.clone()));
+            let genre_groups = group_by(&games, |g| {
+                scraped
+                    .get(&format!("./{}", rom_path_for(g)))
+                    .and_then(|(genre, _)| genre.clone())
+            });
             for (genre, genre_games) in genre_groups {
                 plan.push((
-                    format!("custom-by-genre-{}.cfg", sanitize_component(&genre).to_lowercase()),
+                    format!(
+                        "custom-by-genre-{}.cfg",
+                        sanitize_component(&genre).to_lowercase()
+                    ),
                     genre_games.iter().map(|g| collection_line_for(g)).collect(),
                 ));
             }
-            let year_groups = group_by(&games, |g| scraped.get(&format!("./{}", rom_path_for(g))).and_then(|(_, year)| year.clone()));
+            let year_groups = group_by(&games, |g| {
+                scraped
+                    .get(&format!("./{}", rom_path_for(g)))
+                    .and_then(|(_, year)| year.clone())
+            });
             for (year, year_games) in year_groups {
-                plan.push((format!("custom-by-year-{year}.cfg"), year_games.iter().map(|g| collection_line_for(g)).collect()));
+                plan.push((
+                    format!("custom-by-year-{year}.cfg"),
+                    year_games.iter().map(|g| collection_line_for(g)).collect(),
+                ));
             }
         }
 
@@ -349,7 +396,11 @@ impl Plugin for CollectionsPlugin {
                 "{} collection file(s) written/updated ({} regions/languages{})",
                 updated,
                 plan.len(),
-                if scraped.is_empty() { "" } else { ", plus genre/year" }
+                if scraped.is_empty() {
+                    ""
+                } else {
+                    ", plus genre/year"
+                }
             ),
             files_written,
         })
@@ -373,7 +424,10 @@ mod tests {
 </datafile>"#;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-playlists-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-plugin-playlists-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -453,10 +507,22 @@ mod tests {
         };
 
         let outcome = CollectionsPlugin.run(&ctx).unwrap();
-        let europe = outcome.files_written.iter().find(|p| p.to_string_lossy().contains("europe")).unwrap();
-        let usa = outcome.files_written.iter().find(|p| p.to_string_lossy().contains("usa")).unwrap();
-        assert!(std::fs::read_to_string(europe).unwrap().contains("Game A (Europe).bin"));
-        assert!(std::fs::read_to_string(usa).unwrap().contains("Game B (USA).bin"));
+        let europe = outcome
+            .files_written
+            .iter()
+            .find(|p| p.to_string_lossy().contains("europe"))
+            .unwrap();
+        let usa = outcome
+            .files_written
+            .iter()
+            .find(|p| p.to_string_lossy().contains("usa"))
+            .unwrap();
+        assert!(std::fs::read_to_string(europe)
+            .unwrap()
+            .contains("Game A (Europe).bin"));
+        assert!(std::fs::read_to_string(usa)
+            .unwrap()
+            .contains("Game B (USA).bin"));
 
         std::fs::remove_dir_all(&output_dir).ok();
     }
@@ -495,14 +561,19 @@ mod tests {
         };
         CollectionsPlugin.run(&ctx).unwrap();
 
-        let europe_path = output_dir.join("collections").join("custom-by-region-europe.cfg");
+        let europe_path = output_dir
+            .join("collections")
+            .join("custom-by-region-europe.cfg");
         let mut content = std::fs::read_to_string(&europe_path).unwrap();
         content.push_str("./manually-added-game.zip\n");
         std::fs::write(&europe_path, &content).unwrap();
 
         CollectionsPlugin.run(&ctx).unwrap();
         let after = std::fs::read_to_string(&europe_path).unwrap();
-        assert!(after.contains("./manually-added-game.zip"), "manual entry must survive regeneration");
+        assert!(
+            after.contains("./manually-added-game.zip"),
+            "manual entry must survive regeneration"
+        );
         assert!(after.contains("Game A (Europe).bin"));
 
         std::fs::remove_dir_all(&output_dir).ok();
@@ -526,10 +597,22 @@ mod tests {
         };
         let outcome = CollectionsPlugin.run(&ctx).unwrap();
         assert!(outcome.summary.contains("genre/year"));
-        let genre_file = outcome.files_written.iter().find(|p| p.to_string_lossy().contains("by-genre-platform")).unwrap();
-        assert!(std::fs::read_to_string(genre_file).unwrap().contains("Game A (Europe).bin"));
-        let year_file = outcome.files_written.iter().find(|p| p.to_string_lossy().contains("by-year-1991")).unwrap();
-        assert!(std::fs::read_to_string(year_file).unwrap().contains("Game A (Europe).bin"));
+        let genre_file = outcome
+            .files_written
+            .iter()
+            .find(|p| p.to_string_lossy().contains("by-genre-platform"))
+            .unwrap();
+        assert!(std::fs::read_to_string(genre_file)
+            .unwrap()
+            .contains("Game A (Europe).bin"));
+        let year_file = outcome
+            .files_written
+            .iter()
+            .find(|p| p.to_string_lossy().contains("by-year-1991"))
+            .unwrap();
+        assert!(std::fs::read_to_string(year_file)
+            .unwrap()
+            .contains("Game A (Europe).bin"));
 
         std::fs::remove_dir_all(&output_dir).ok();
     }
@@ -547,7 +630,10 @@ mod tests {
             dry_run: false,
         };
         let outcome = CollectionsPlugin.run(&ctx).unwrap();
-        assert!(!outcome.files_written.iter().any(|p| p.to_string_lossy().contains("by-genre")));
+        assert!(!outcome
+            .files_written
+            .iter()
+            .any(|p| p.to_string_lossy().contains("by-genre")));
 
         std::fs::remove_dir_all(&output_dir).ok();
     }

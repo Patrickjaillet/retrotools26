@@ -68,7 +68,10 @@ pub fn find_duplicate_matches(report: &MatchReport) -> Vec<DuplicateGroup> {
     let mut groups: BTreeMap<(String, String), Vec<RomMatch>> = BTreeMap::new();
     for rom_match in &report.matched {
         if let (Some(game), Some(rom)) = (&rom_match.matched_game, &rom_match.matched_rom) {
-            groups.entry((game.clone(), rom.clone())).or_default().push(rom_match.clone());
+            groups
+                .entry((game.clone(), rom.clone()))
+                .or_default()
+                .push(rom_match.clone());
         }
     }
 
@@ -104,23 +107,35 @@ pub fn match_scan(gameset: &GameSet, scanned: &[ScannedRom]) -> MatchReport {
         for rom in &game.roms {
             let crc = rom.crc32.as_deref().unwrap_or_default().to_lowercase();
             if !crc.is_empty() {
-                by_hash
-                    .entry(crc)
-                    .or_insert((game.id.as_str(), game.name.as_str(), rom.name.as_str(), rom.size));
+                by_hash.entry(crc).or_insert((
+                    game.id.as_str(),
+                    game.name.as_str(),
+                    rom.name.as_str(),
+                    rom.size,
+                ));
             }
             if let Some(sha1) = rom.sha1.as_deref() {
-                by_hash
-                    .entry(sha1.to_lowercase())
-                    .or_insert((game.id.as_str(), game.name.as_str(), rom.name.as_str(), rom.size));
+                by_hash.entry(sha1.to_lowercase()).or_insert((
+                    game.id.as_str(),
+                    game.name.as_str(),
+                    rom.name.as_str(),
+                    rom.size,
+                ));
             }
             if let Some(md5) = rom.md5.as_deref() {
-                by_hash
-                    .entry(md5.to_lowercase())
-                    .or_insert((game.id.as_str(), game.name.as_str(), rom.name.as_str(), rom.size));
+                by_hash.entry(md5.to_lowercase()).or_insert((
+                    game.id.as_str(),
+                    game.name.as_str(),
+                    rom.name.as_str(),
+                    rom.size,
+                ));
             }
-            by_name
-                .entry(rom.name.to_lowercase())
-                .or_insert((game.id.as_str(), game.name.as_str(), rom.name.as_str(), rom.size));
+            by_name.entry(rom.name.to_lowercase()).or_insert((
+                game.id.as_str(),
+                game.name.as_str(),
+                rom.name.as_str(),
+                rom.size,
+            ));
         }
     }
 
@@ -135,8 +150,12 @@ pub fn match_scan(gameset: &GameSet, scanned: &[ScannedRom]) -> MatchReport {
             Some(rom.hashes.crc32.to_lowercase()),
             Some(rom.hashes.sha1.to_lowercase()),
             Some(rom.hashes.md5.to_lowercase()),
-            rom.headerless_hashes.as_ref().map(|h| h.crc32.to_lowercase()),
-            rom.headerless_hashes.as_ref().map(|h| h.sha1.to_lowercase()),
+            rom.headerless_hashes
+                .as_ref()
+                .map(|h| h.crc32.to_lowercase()),
+            rom.headerless_hashes
+                .as_ref()
+                .map(|h| h.sha1.to_lowercase()),
             rom.headerless_hashes.as_ref().map(|h| h.md5.to_lowercase()),
         ];
 
@@ -199,8 +218,8 @@ pub fn match_scan(gameset: &GameSet, scanned: &[ScannedRom]) -> MatchReport {
 mod tests {
     use super::*;
     use crate::dat::parse_dat_str;
-    use crate::header::RomHeaderKind;
     use crate::hash::FileHashes;
+    use crate::header::RomHeaderKind;
     use std::path::PathBuf;
 
     const SAMPLE: &str = r#"<?xml version="1.0"?>
@@ -263,7 +282,10 @@ mod tests {
     #[test]
     fn finds_no_duplicates_when_every_match_is_unique() {
         let gameset = parse_dat_str(SAMPLE, "Test").unwrap();
-        let scan = vec![scanned("game-a.bin", "b1f7f5a0", 4), scanned("game-b.bin", "ffffffff", 4)];
+        let scan = vec![
+            scanned("game-a.bin", "b1f7f5a0", 4),
+            scanned("game-b.bin", "ffffffff", 4),
+        ];
         let report = match_scan(&gameset, &scan);
         assert!(find_duplicate_matches(&report).is_empty());
     }
@@ -284,8 +306,14 @@ mod tests {
         assert_eq!(group.game_name, "Game A");
         assert_eq!(group.rom_name, "game-a.bin");
         // "a-copy/..." sorts before "z-copy/..." lexicographically.
-        assert_eq!(group.keep.scanned.source_path, PathBuf::from("a-copy/game-a.bin"));
+        assert_eq!(
+            group.keep.scanned.source_path,
+            PathBuf::from("a-copy/game-a.bin")
+        );
         assert_eq!(group.extra.len(), 1);
-        assert_eq!(group.extra[0].scanned.source_path, PathBuf::from("z-copy/game-a.bin"));
+        assert_eq!(
+            group.extra[0].scanned.source_path,
+            PathBuf::from("z-copy/game-a.bin")
+        );
     }
 }

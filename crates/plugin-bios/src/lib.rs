@@ -25,7 +25,8 @@ impl Plugin for BiosPlugin {
     fn run(&self, ctx: &PluginContext) -> PluginResult<PluginOutcome> {
         let Some(source_dir) = ctx.source_dir else {
             return Err(
-                "this plugin requires a source directory containing the BIOS files to verify".to_string(),
+                "this plugin requires a source directory containing the BIOS files to verify"
+                    .to_string(),
             );
         };
 
@@ -49,7 +50,10 @@ impl Plugin for BiosPlugin {
             match_report.missing.len()
         );
         for missing in &match_report.missing {
-            report.push_str(&format!("MISSING: {} ({})\n", missing.rom_name, missing.game_name));
+            report.push_str(&format!(
+                "MISSING: {} ({})\n",
+                missing.rom_name, missing.game_name
+            ));
         }
         for corrupt in &match_report.corrupt {
             report.push_str(&format!(
@@ -90,7 +94,8 @@ mod tests {
 </datafile>"#;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-bios-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-plugin-bios-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }

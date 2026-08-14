@@ -32,7 +32,9 @@ pub fn load_hash_cache(console_id: u32) -> HashSet<String> {
     let Ok(raw) = std::fs::read_to_string(cache_file(console_id)) else {
         return HashSet::new();
     };
-    serde_json::from_str::<Vec<String>>(&raw).map(|v| v.into_iter().collect()).unwrap_or_default()
+    serde_json::from_str::<Vec<String>>(&raw)
+        .map(|v| v.into_iter().collect())
+        .unwrap_or_default()
 }
 
 #[cfg(test)]

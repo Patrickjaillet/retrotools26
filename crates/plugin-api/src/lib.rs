@@ -71,7 +71,10 @@ impl PluginRegistry {
     }
 
     pub fn find(&self, id: &str) -> Option<&dyn Plugin> {
-        self.plugins.iter().find(|p| p.id() == id).map(|p| p.as_ref())
+        self.plugins
+            .iter()
+            .find(|p| p.id() == id)
+            .map(|p| p.as_ref())
     }
 
     pub fn run(&self, id: &str, ctx: &PluginContext) -> PluginResult<PluginOutcome> {

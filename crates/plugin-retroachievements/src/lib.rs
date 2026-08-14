@@ -92,7 +92,12 @@ impl Plugin for RetroAchievementsPlugin {
         } else {
             ctx.kept_game_names.iter().map(|s| s.as_str()).collect()
         };
-        let targets: Vec<&retrotools_core::Game> = ctx.gameset.games.iter().filter(|g| target_names.contains(&g.name.as_str())).collect();
+        let targets: Vec<&retrotools_core::Game> = ctx
+            .gameset
+            .games
+            .iter()
+            .filter(|g| target_names.contains(&g.name.as_str()))
+            .collect();
         if targets.is_empty() {
             return Err("no games to check (empty DAT or 1G1R selection)".to_string());
         }
@@ -110,17 +115,24 @@ impl Plugin for RetroAchievementsPlugin {
         let client = RetroAchievementsClient::new();
         let limiter = RateLimiter::new(Duration::from_millis(1000), 3);
         let hashes = limiter.run(|| {
-            client.fetch_console_hashes(&credentials, console_id).map_err(|(message, transient)| {
-                let extra_transient = is_transient(&message);
-                (message, transient || extra_transient)
-            })
+            client
+                .fetch_console_hashes(&credentials, console_id)
+                .map_err(|(message, transient)| {
+                    let extra_transient = is_transient(&message);
+                    (message, transient || extra_transient)
+                })
         })?;
 
         cache::save_hash_cache(console_id, &hashes)?;
 
         let mut unknown = Vec::new();
         for game in &targets {
-            let known = game.roms.iter().any(|rom| rom.md5.as_deref().map(|md5| hashes.contains(&md5.to_lowercase())).unwrap_or(false));
+            let known = game.roms.iter().any(|rom| {
+                rom.md5
+                    .as_deref()
+                    .map(|md5| hashes.contains(&md5.to_lowercase()))
+                    .unwrap_or(false)
+            });
             if !known {
                 unknown.push(game.name.clone());
             }
@@ -128,7 +140,10 @@ impl Plugin for RetroAchievementsPlugin {
 
         let report_path = ctx.output_dir.join("retroachievements-report.txt");
         std::fs::create_dir_all(ctx.output_dir).map_err(|e| e.to_string())?;
-        let mut report_text = format!("console {console_id}: {} known hash(es) cached\n\n", hashes.len());
+        let mut report_text = format!(
+            "console {console_id}: {} known hash(es) cached\n\n",
+            hashes.len()
+        );
         for name in &unknown {
             report_text.push_str(&format!("{name}\tno known RetroAchievements hash\n"));
         }
@@ -190,7 +205,10 @@ mod tests {
     }
 
     fn temp_dir(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-retroachievements-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-plugin-retroachievements-test-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -208,15 +226,22 @@ mod tests {
             dry_run: false,
         };
         let err = RetroAchievementsPlugin.run(&ctx).unwrap_err();
-        assert!(err.contains("Settings"), "error should point the user at Settings, got: {err}");
+        assert!(
+            err.contains("Settings"),
+            "error should point the user at Settings, got: {err}"
+        );
         std::fs::remove_dir_all(&output).ok();
     }
 
     #[test]
     fn is_transient_classifies_rate_limit_and_server_errors_as_retryable() {
-        assert!(is_transient("RetroAchievements request failed with status 429"));
+        assert!(is_transient(
+            "RetroAchievements request failed with status 429"
+        ));
         assert!(is_transient("request timed out"));
-        assert!(!is_transient("RetroAchievements request failed with status 401"));
+        assert!(!is_transient(
+            "RetroAchievements request failed with status 401"
+        ));
     }
 
     #[test]

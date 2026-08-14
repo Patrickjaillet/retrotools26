@@ -35,7 +35,10 @@ fn run_chdman(args: &[&std::ffi::OsStr]) -> AppResult<()> {
 /// sheet — hard-disk-style images), based on `source`'s extension.
 pub fn convert_to_chd(source: &Path, dest_chd: &Path) -> AppResult<PathBuf> {
     if !source.is_file() {
-        return Err(AppError::Scan(format!("'{}' is not a file", source.display())));
+        return Err(AppError::Scan(format!(
+            "'{}' is not a file",
+            source.display()
+        )));
     }
     let extension = source
         .extension()
@@ -81,7 +84,10 @@ pub fn convert_to_chd(source: &Path, dest_chd: &Path) -> AppResult<PathBuf> {
 /// the extracted `.bin`.
 pub fn convert_from_chd(source_chd: &Path, dest_dir: &Path) -> AppResult<PathBuf> {
     if !source_chd.is_file() {
-        return Err(AppError::Scan(format!("'{}' is not a file", source_chd.display())));
+        return Err(AppError::Scan(format!(
+            "'{}' is not a file",
+            source_chd.display()
+        )));
     }
     std::fs::create_dir_all(dest_dir).map_err(AppError::Io)?;
     let stem = source_chd
@@ -124,7 +130,10 @@ pub fn convert_from_chd(source_chd: &Path, dest_dir: &Path) -> AppResult<PathBuf
 
 fn require_source_file(source: &Path) -> AppResult<()> {
     if !source.is_file() {
-        return Err(AppError::Scan(format!("'{}' is not a file", source.display())));
+        return Err(AppError::Scan(format!(
+            "'{}' is not a file",
+            source.display()
+        )));
     }
     Ok(())
 }
@@ -155,7 +164,10 @@ pub fn convert_to_rvz(source: &Path, dest_rvz: &Path) -> AppResult<PathBuf> {
 pub fn convert_from_rvz(source_rvz: &Path, dest_dir: &Path) -> AppResult<PathBuf> {
     require_source_file(source_rvz)?;
     std::fs::create_dir_all(dest_dir).map_err(AppError::Io)?;
-    let stem = source_rvz.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "output".to_string());
+    let stem = source_rvz
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "output".to_string());
     let dest_iso = dest_dir.join(format!("{stem}.iso"));
     run_tool(
         ExternalTool::DolphinTool,
@@ -178,7 +190,10 @@ pub fn convert_to_cso(source: &Path, dest_cso: &Path) -> AppResult<PathBuf> {
     if let Some(parent) = dest_cso.parent() {
         std::fs::create_dir_all(parent).map_err(AppError::Io)?;
     }
-    run_tool(ExternalTool::Maxcso, &[source.as_os_str(), "-o".as_ref(), dest_cso.as_os_str()])?;
+    run_tool(
+        ExternalTool::Maxcso,
+        &[source.as_os_str(), "-o".as_ref(), dest_cso.as_os_str()],
+    )?;
     Ok(dest_cso.to_path_buf())
 }
 
@@ -186,11 +201,19 @@ pub fn convert_to_cso(source: &Path, dest_cso: &Path) -> AppResult<PathBuf> {
 pub fn convert_from_cso(source_cso: &Path, dest_dir: &Path) -> AppResult<PathBuf> {
     require_source_file(source_cso)?;
     std::fs::create_dir_all(dest_dir).map_err(AppError::Io)?;
-    let stem = source_cso.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "output".to_string());
+    let stem = source_cso
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "output".to_string());
     let dest_iso = dest_dir.join(format!("{stem}.iso"));
     run_tool(
         ExternalTool::Maxcso,
-        &["--decompress".as_ref(), source_cso.as_os_str(), "-o".as_ref(), dest_iso.as_os_str()],
+        &[
+            "--decompress".as_ref(),
+            source_cso.as_os_str(),
+            "-o".as_ref(),
+            dest_iso.as_os_str(),
+        ],
     )?;
     Ok(dest_iso)
 }
@@ -200,7 +223,8 @@ mod tests {
     use super::*;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-convert-test-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-convert-test-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }

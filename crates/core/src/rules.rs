@@ -35,7 +35,12 @@ pub struct RulePriority {
 impl Default for RulePriority {
     fn default() -> Self {
         Self {
-            region_order: vec!["Europe".into(), "USA".into(), "Japan".into(), "World".into()],
+            region_order: vec![
+                "Europe".into(),
+                "USA".into(),
+                "Japan".into(),
+                "World".into(),
+            ],
             language_order: vec!["En".into()],
             prefer_parent: true,
             exclude_beta: true,
@@ -75,15 +80,31 @@ impl RulePriority {
 
     pub fn standard_europe() -> Self {
         Self {
-            region_order: vec!["Europe".into(), "World".into(), "USA".into(), "Japan".into()],
-            language_order: vec!["En".into(), "Fr".into(), "De".into(), "Es".into(), "It".into()],
+            region_order: vec![
+                "Europe".into(),
+                "World".into(),
+                "USA".into(),
+                "Japan".into(),
+            ],
+            language_order: vec![
+                "En".into(),
+                "Fr".into(),
+                "De".into(),
+                "Es".into(),
+                "It".into(),
+            ],
             ..Self::default()
         }
     }
 
     pub fn standard_usa() -> Self {
         Self {
-            region_order: vec!["USA".into(), "World".into(), "Europe".into(), "Japan".into()],
+            region_order: vec![
+                "USA".into(),
+                "World".into(),
+                "Europe".into(),
+                "Japan".into(),
+            ],
             language_order: vec!["En".into()],
             ..Self::default()
         }
@@ -144,7 +165,11 @@ fn is_ra_compatible(game: &Game, rules: &RulePriority) -> bool {
         && game.roms.iter().any(|rom| {
             rom.md5
                 .as_deref()
-                .map(|md5| rules.retroachievements_compatible_roms.contains(&md5.to_lowercase()))
+                .map(|md5| {
+                    rules
+                        .retroachievements_compatible_roms
+                        .contains(&md5.to_lowercase())
+                })
                 .unwrap_or(false)
         })
 }
@@ -166,7 +191,14 @@ fn compute_score(game: &Game, rules: &RulePriority) -> ScoreKey {
     };
     let alt_penalty = if game.is_alt { -1 } else { 0 };
     let ra_bonus = if is_ra_compatible(game, rules) { 1 } else { 0 };
-    (region_rank, language_rank, revision, parent_bonus, alt_penalty, ra_bonus)
+    (
+        region_rank,
+        language_rank,
+        revision,
+        parent_bonus,
+        alt_penalty,
+        ra_bonus,
+    )
 }
 
 /// A "release": one or more disc/file entries that together form a single
@@ -272,10 +304,7 @@ fn explain(winner_score: ScoreKey, runner_up: Option<(&ReleaseCandidate, ScoreKe
             winner_score.1, runner_score.1, runner.base_name
         )
     } else if winner_score.2 != runner_score.2 {
-        format!(
-            "higher revision score beats '{}'",
-            runner.base_name
-        )
+        format!("higher revision score beats '{}'", runner.base_name)
     } else if winner_score.3 != runner_score.3 {
         "parent release preferred over clone".to_string()
     } else {
@@ -304,7 +333,9 @@ pub fn preview_selection(games: &[Game], rules: &RulePriority) -> SelectionResul
         candidates.sort_by(|a, b| {
             let score_a = compute_score(a.representative(), rules);
             let score_b = compute_score(b.representative(), rules);
-            score_b.cmp(&score_a).then_with(|| a.base_name.cmp(&b.base_name))
+            score_b
+                .cmp(&score_a)
+                .then_with(|| a.base_name.cmp(&b.base_name))
         });
 
         let Some(winner) = candidates.first() else {

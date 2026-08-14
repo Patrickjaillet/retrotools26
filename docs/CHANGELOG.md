@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-08-14
+
+### Fixed
+- CI was red on every commit since early in the project and had gone unnoticed because local checks never ran with the same strict flags: `cargo clippy --workspace --all-targets -- -D warnings` failed on two long-standing warnings (`ThemePreference`'s and `ToastManager`'s manual `Default` impls, both now `#[derive(Default)]`; `ToastManager::report` was genuinely unused code and removed), and `cargo fmt --all -- --check` failed across most of the codebase (now reformatted to rustfmt defaults, no behavior change)
+
 ## [0.1.3] - 2026-08-14
 
 ### Fixed

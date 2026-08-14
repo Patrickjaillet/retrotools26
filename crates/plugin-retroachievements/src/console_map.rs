@@ -15,7 +15,10 @@ pub struct ConsoleTable {
 pub fn default_console_table() -> ConsoleTable {
     let mut entries = BTreeMap::new();
     entries.insert("Nintendo - Nintendo Entertainment System".to_string(), 7);
-    entries.insert("Nintendo - Super Nintendo Entertainment System".to_string(), 3);
+    entries.insert(
+        "Nintendo - Super Nintendo Entertainment System".to_string(),
+        3,
+    );
     entries.insert("Nintendo - Game Boy".to_string(), 4);
     entries.insert("Nintendo - Game Boy Color".to_string(), 6);
     entries.insert("Nintendo - Game Boy Advance".to_string(), 5);
@@ -60,12 +63,18 @@ mod tests {
     fn default_table_covers_the_common_platforms() {
         let table = default_console_table();
         assert_eq!(table.entries.get("Sony - PlayStation"), Some(&12));
-        assert_eq!(table.entries.get("Nintendo - Super Nintendo Entertainment System"), Some(&3));
+        assert_eq!(
+            table
+                .entries
+                .get("Nintendo - Super Nintendo Entertainment System"),
+            Some(&3)
+        );
     }
 
     #[test]
     fn loading_a_missing_file_seeds_and_returns_the_default() {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-ra-consolemap-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-plugin-ra-consolemap-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("console-map.json");
         let table = load_or_default_table_from(&path);
@@ -76,11 +85,16 @@ mod tests {
 
     #[test]
     fn loading_an_existing_edited_file_respects_user_changes() {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-ra-consolemap-edited-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-plugin-ra-consolemap-edited-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("console-map.json");
         let mut custom = ConsoleTable::default();
-        custom.entries.insert("Some Custom Platform".to_string(), 999);
+        custom
+            .entries
+            .insert("Some Custom Platform".to_string(), 999);
         std::fs::write(&path, serde_json::to_string_pretty(&custom).unwrap()).unwrap();
 
         let loaded = load_or_default_table_from(&path);

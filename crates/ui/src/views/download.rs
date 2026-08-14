@@ -56,10 +56,13 @@ const SECTIONS: &[Section] = &[
 ];
 
 pub fn show(ui: &mut Ui) {
-    egui::ScrollArea::vertical().id_source("download_scroll").auto_shrink([false, false]).show(ui, |ui| {
-    ui.heading("Download");
-    ui.add_space(8.0);
-    ui.label(
+    egui::ScrollArea::vertical()
+        .id_source("download_scroll")
+        .auto_shrink([false, false])
+        .show(ui, |ui| {
+            ui.heading("Download");
+            ui.add_space(8.0);
+            ui.label(
         RichText::new(
             "Official/community sites for everything this app works with — DATs, frontends, \
              RetroArch cores/shaders, and the third-party conversion tools. Every link below \
@@ -67,8 +70,8 @@ pub fn show(ui: &mut Ui) {
         )
         .weak(),
     );
-    ui.add_space(6.0);
-    ui.label(
+            ui.add_space(6.0);
+            ui.label(
         RichText::new(
             "This list intentionally does not include ROM download sites. This app manages \
              ROM files you already legally own or have dumped yourself — it has no opinion on \
@@ -77,25 +80,28 @@ pub fn show(ui: &mut Ui) {
         .strong()
         .color(egui::Color32::from_rgb(214, 130, 40)),
     );
-    ui.add_space(16.0);
+            ui.add_space(16.0);
 
-    for section in SECTIONS {
-        ui.separator();
-        ui.add_space(10.0);
-        ui.label(RichText::new(section.title).strong().size(16.0));
-        ui.add_space(2.0);
-        ui.label(RichText::new(section.intro).weak().small());
-        ui.add_space(6.0);
-        egui::Grid::new(section.title).num_columns(2).spacing([12.0, 6.0]).show(ui, |ui| {
-            for link in section.links {
-                ui.hyperlink_to(link.name, link.url);
-                ui.label(RichText::new(link.note).weak().small());
-                ui.end_row();
+            for section in SECTIONS {
+                ui.separator();
+                ui.add_space(10.0);
+                ui.label(RichText::new(section.title).strong().size(16.0));
+                ui.add_space(2.0);
+                ui.label(RichText::new(section.intro).weak().small());
+                ui.add_space(6.0);
+                egui::Grid::new(section.title)
+                    .num_columns(2)
+                    .spacing([12.0, 6.0])
+                    .show(ui, |ui| {
+                        for link in section.links {
+                            ui.hyperlink_to(link.name, link.url);
+                            ui.label(RichText::new(link.note).weak().small());
+                            ui.end_row();
+                        }
+                    });
+                ui.add_space(6.0);
             }
         });
-        ui.add_space(6.0);
-    }
-    });
 }
 
 #[cfg(test)]
@@ -106,7 +112,12 @@ mod tests {
     fn every_link_uses_https_or_http() {
         for section in SECTIONS {
             for link in section.links {
-                assert!(link.url.starts_with("https://") || link.url.starts_with("http://"), "{} has a suspicious URL: {}", link.name, link.url);
+                assert!(
+                    link.url.starts_with("https://") || link.url.starts_with("http://"),
+                    "{} has a suspicious URL: {}",
+                    link.name,
+                    link.url
+                );
             }
         }
     }
@@ -118,7 +129,12 @@ mod tests {
             for link in section.links {
                 let lower = link.url.to_lowercase();
                 for banned in banned_substrings {
-                    assert!(!lower.contains(banned), "{} looks like it might be a ROM-hosting link: {}", link.name, link.url);
+                    assert!(
+                        !lower.contains(banned),
+                        "{} looks like it might be a ROM-hosting link: {}",
+                        link.name,
+                        link.url
+                    );
                 }
             }
         }
@@ -127,7 +143,11 @@ mod tests {
     #[test]
     fn every_section_has_at_least_one_link() {
         for section in SECTIONS {
-            assert!(!section.links.is_empty(), "section '{}' has no links", section.title);
+            assert!(
+                !section.links.is_empty(),
+                "section '{}' has no links",
+                section.title
+            );
         }
     }
 }

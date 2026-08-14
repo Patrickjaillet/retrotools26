@@ -55,10 +55,11 @@ impl UndoLog {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).map_err(AppError::Io)?;
         }
-        let conn =
-            Connection::open(path).map_err(|e| AppError::FileOperation(format!("cannot open undo log: {e}")))?;
-        conn.execute_batch(SCHEMA)
-            .map_err(|e| AppError::FileOperation(format!("cannot initialize undo log schema: {e}")))?;
+        let conn = Connection::open(path)
+            .map_err(|e| AppError::FileOperation(format!("cannot open undo log: {e}")))?;
+        conn.execute_batch(SCHEMA).map_err(|e| {
+            AppError::FileOperation(format!("cannot initialize undo log schema: {e}"))
+        })?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -67,8 +68,9 @@ impl UndoLog {
     pub fn open_in_memory() -> AppResult<Self> {
         let conn = Connection::open_in_memory()
             .map_err(|e| AppError::FileOperation(format!("cannot open in-memory undo log: {e}")))?;
-        conn.execute_batch(SCHEMA)
-            .map_err(|e| AppError::FileOperation(format!("cannot initialize undo log schema: {e}")))?;
+        conn.execute_batch(SCHEMA).map_err(|e| {
+            AppError::FileOperation(format!("cannot initialize undo log schema: {e}"))
+        })?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -82,10 +84,7 @@ impl UndoLog {
 
     pub fn new_batch(&self, label: &str) -> AppResult<String> {
         let seq = BATCH_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let id = format!(
-            "{}-{seq}",
-            chrono::Utc::now().format("%Y%m%dT%H%M%S%.6f")
-        );
+        let id = format!("{}-{seq}", chrono::Utc::now().format("%Y%m%dT%H%M%S%.6f"));
         let conn = self.lock()?;
         conn.execute(
             "INSERT INTO build_batches (id, label, created_at) VALUES (?1, ?2, ?3)",
@@ -95,7 +94,13 @@ impl UndoLog {
         Ok(id)
     }
 
-    pub fn record(&self, batch_id: &str, kind: &str, source: &Path, destination: &Path) -> AppResult<()> {
+    pub fn record(
+        &self,
+        batch_id: &str,
+        kind: &str,
+        source: &Path,
+        destination: &Path,
+    ) -> AppResult<()> {
         let conn = self.lock()?;
         conn.execute(
             "INSERT INTO build_actions (batch_id, kind, source, destination) VALUES (?1, ?2, ?3, ?4)",
@@ -135,7 +140,9 @@ impl UndoLog {
 
         let mut result = Vec::new();
         for row in rows {
-            result.push(row.map_err(|e| AppError::FileOperation(format!("undo batch row error: {e}")))?);
+            result.push(
+                row.map_err(|e| AppError::FileOperation(format!("undo batch row error: {e}")))?,
+            );
         }
         Ok(result)
     }
@@ -162,7 +169,9 @@ impl UndoLog {
 
         let mut result = Vec::new();
         for row in rows {
-            result.push(row.map_err(|e| AppError::FileOperation(format!("undo action row error: {e}")))?);
+            result.push(
+                row.map_err(|e| AppError::FileOperation(format!("undo action row error: {e}")))?,
+            );
         }
         Ok(result)
     }
@@ -209,7 +218,9 @@ impl UndoLog {
                         Ok(())
                     }
                 }
-                other => Err(AppError::FileOperation(format!("unknown undo action kind '{other}'"))),
+                other => Err(AppError::FileOperation(format!(
+                    "unknown undo action kind '{other}'"
+                ))),
             };
 
             match result {
@@ -232,7 +243,8 @@ mod tests {
     use super::*;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-undo-test-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-undo-test-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }

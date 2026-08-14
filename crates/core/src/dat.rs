@@ -6,16 +6,47 @@ use std::io::Read;
 use std::path::Path;
 
 const KNOWN_REGIONS: &[&str] = &[
-    "World", "Europe", "USA", "Japan", "Asia", "Australia", "Brazil", "Canada", "China",
-    "Denmark", "Finland", "France", "Germany", "Greece", "Hong Kong", "India", "Ireland",
-    "Israel", "Italy", "Korea", "Latin America", "Netherlands", "New Zealand", "Norway",
-    "Poland", "Portugal", "Russia", "Scandinavia", "Spain", "Sweden", "Switzerland", "Taiwan",
-    "Turkey", "UK", "United Kingdom", "USA, Europe",
+    "World",
+    "Europe",
+    "USA",
+    "Japan",
+    "Asia",
+    "Australia",
+    "Brazil",
+    "Canada",
+    "China",
+    "Denmark",
+    "Finland",
+    "France",
+    "Germany",
+    "Greece",
+    "Hong Kong",
+    "India",
+    "Ireland",
+    "Israel",
+    "Italy",
+    "Korea",
+    "Latin America",
+    "Netherlands",
+    "New Zealand",
+    "Norway",
+    "Poland",
+    "Portugal",
+    "Russia",
+    "Scandinavia",
+    "Spain",
+    "Sweden",
+    "Switzerland",
+    "Taiwan",
+    "Turkey",
+    "UK",
+    "United Kingdom",
+    "USA, Europe",
 ];
 
 const KNOWN_LANGUAGES: &[&str] = &[
-    "En", "Fr", "De", "Es", "It", "Nl", "Sv", "Da", "No", "Fi", "Zh", "Ja", "Ko", "Pt", "Ru",
-    "Pl", "Cs", "Hu", "Tr", "El", "Ar", "He", "Zh-Hans", "Zh-Hant",
+    "En", "Fr", "De", "Es", "It", "Nl", "Sv", "Da", "No", "Fi", "Zh", "Ja", "Ko", "Pt", "Ru", "Pl",
+    "Cs", "Hu", "Tr", "El", "Ar", "He", "Zh-Hans", "Zh-Hant",
 ];
 
 #[derive(Debug, Default, Clone)]
@@ -91,7 +122,9 @@ fn parse_name_tags(name: &str) -> NameTags {
         if lower == "alt" || lower.starts_with("alt ") {
             tags.is_alt = true;
         }
-        if lower.starts_with("rev") || lower.starts_with('v') && lower.chars().nth(1).is_some_and(|c| c.is_ascii_digit()) {
+        if lower.starts_with("rev")
+            || lower.starts_with('v') && lower.chars().nth(1).is_some_and(|c| c.is_ascii_digit())
+        {
             tags.revision = Some(group.clone());
         }
 
@@ -163,9 +196,7 @@ fn read_dat_source(path: &Path) -> AppResult<String> {
         .by_name(&entry_name)
         .map_err(|e| AppError::DatParsing(format!("cannot read ZIP entry: {e}")))?;
     let mut contents = String::new();
-    entry
-        .read_to_string(&mut contents)
-        .map_err(AppError::Io)?;
+    entry.read_to_string(&mut contents).map_err(AppError::Io)?;
     Ok(contents)
 }
 
@@ -507,7 +538,8 @@ mod tests {
 
     #[test]
     fn rejects_empty_dat() {
-        let empty = r#"<?xml version="1.0"?><datafile><header><name>Empty</name></header></datafile>"#;
+        let empty =
+            r#"<?xml version="1.0"?><datafile><header><name>Empty</name></header></datafile>"#;
         assert!(parse_dat_str(empty, "Empty").is_err());
     }
 

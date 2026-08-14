@@ -25,18 +25,25 @@ pub enum ChecksumAlgorithm {
 /// a checksum the user copied from the distribution's official release
 /// page. Reuses `retrotools_core::hash` (the same hashing already used for
 /// ROM scanning) rather than reimplementing it.
-pub fn verify_checksum(image_path: &Path, algorithm: ChecksumAlgorithm, expected_hex: &str) -> Result<(), String> {
+pub fn verify_checksum(
+    image_path: &Path,
+    algorithm: ChecksumAlgorithm,
+    expected_hex: &str,
+) -> Result<(), String> {
     if !image_path.is_file() {
         return Err(format!("'{}' is not a file", image_path.display()));
     }
-    let hashes = retrotools_core::hash::compute_hashes_for_file(image_path).map_err(|e| e.to_string())?;
+    let hashes =
+        retrotools_core::hash::compute_hashes_for_file(image_path).map_err(|e| e.to_string())?;
     let actual = match algorithm {
         ChecksumAlgorithm::Sha256 => &hashes.full.sha256,
         ChecksumAlgorithm::Md5 => &hashes.full.md5,
     };
     let expected = expected_hex.trim().to_lowercase();
     if actual.to_lowercase() != expected {
-        return Err(format!("checksum mismatch: expected {expected}, got {actual}"));
+        return Err(format!(
+            "checksum mismatch: expected {expected}, got {actual}"
+        ));
     }
     Ok(())
 }
@@ -59,7 +66,11 @@ fn parse_devices(stdout: &str) -> Vec<RemovableDevice> {
             if id.is_empty() {
                 return None;
             }
-            Some(RemovableDevice { id, model, size_bytes })
+            Some(RemovableDevice {
+                id,
+                model,
+                size_bytes,
+            })
         })
         .collect()
 }
@@ -79,7 +90,9 @@ pub fn list_removable_devices() -> Vec<RemovableDevice> {
         ])
         .output();
     match output {
-        Ok(output) if output.status.success() => parse_devices(&String::from_utf8_lossy(&output.stdout)),
+        Ok(output) if output.status.success() => {
+            parse_devices(&String::from_utf8_lossy(&output.stdout))
+        }
         _ => Vec::new(),
     }
 }
@@ -92,21 +105,35 @@ pub type WriteLog = Vec<String>;
 /// time, so a stale selection or a copy-paste mistake can't silently wipe
 /// the wrong disk. `dry_run` performs every check without opening
 /// `destination` for writing at all.
-pub fn write_image(image_path: &Path, destination: &Path, device_id_to_confirm: &str, confirm_token: &str, dry_run: bool) -> Result<WriteLog, String> {
+pub fn write_image(
+    image_path: &Path,
+    destination: &Path,
+    device_id_to_confirm: &str,
+    confirm_token: &str,
+    dry_run: bool,
+) -> Result<WriteLog, String> {
     let mut log = Vec::new();
     if !image_path.is_file() {
         return Err(format!("'{}' is not a file", image_path.display()));
     }
     if confirm_token != device_id_to_confirm {
-        return Err("confirmation does not match the target device id — nothing was written".into());
+        return Err(
+            "confirmation does not match the target device id — nothing was written".into(),
+        );
     }
     log.push(format!("confirmed target: {device_id_to_confirm}"));
 
-    let size = std::fs::metadata(image_path).map_err(|e| e.to_string())?.len();
+    let size = std::fs::metadata(image_path)
+        .map_err(|e| e.to_string())?
+        .len();
     log.push(format!("image size: {size} bytes"));
 
     if dry_run {
-        log.push(format!("[dry run] would write '{}' to '{}'", image_path.display(), destination.display()));
+        log.push(format!(
+            "[dry run] would write '{}' to '{}'",
+            image_path.display(),
+            destination.display()
+        ));
         return Ok(log);
     }
 
@@ -182,7 +209,9 @@ impl Plugin for SdCardInjectPlugin {
     }
 
     fn run(&self, ctx: &PluginContext) -> PluginResult<PluginOutcome> {
-        let source = ctx.source_dir.ok_or("a source directory is required — point it at the staging folder to copy from")?;
+        let source = ctx.source_dir.ok_or(
+            "a source directory is required — point it at the staging folder to copy from",
+        )?;
         if !source.is_dir() {
             return Err(format!("'{}' is not a directory", source.display()));
         }
@@ -193,7 +222,11 @@ impl Plugin for SdCardInjectPlugin {
 
         if ctx.dry_run {
             return Ok(PluginOutcome {
-                summary: format!("[dry run] would copy {} file(s) to '{}'", files.len(), ctx.output_dir.display()),
+                summary: format!(
+                    "[dry run] would copy {} file(s) to '{}'",
+                    files.len(),
+                    ctx.output_dir.display()
+                ),
                 files_written: Vec::new(),
             });
         }
@@ -206,12 +239,17 @@ impl Plugin for SdCardInjectPlugin {
             if let Some(parent) = dest_path.parent() {
                 std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
-            std::fs::copy(&src_path, &dest_path).map_err(|e| format!("cannot copy '{}': {e}", src_path.display()))?;
+            std::fs::copy(&src_path, &dest_path)
+                .map_err(|e| format!("cannot copy '{}': {e}", src_path.display()))?;
             files_written.push(dest_path);
         }
 
         Ok(PluginOutcome {
-            summary: format!("copied {} file(s) to '{}'", files_written.len(), ctx.output_dir.display()),
+            summary: format!(
+                "copied {} file(s) to '{}'",
+                files_written.len(),
+                ctx.output_dir.display()
+            ),
             files_written,
         })
     }
@@ -223,7 +261,10 @@ mod tests {
     use retrotools_core::{DatHeader, DatType, GameSet};
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-sdcard-imager-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-plugin-sdcard-imager-test-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -244,7 +285,10 @@ mod tests {
         let dir = temp_dir("checksum-ok");
         let image = dir.join("base.img");
         std::fs::write(&image, b"hello retro world").unwrap();
-        let expected = retrotools_core::hash::compute_hashes_for_file(&image).unwrap().full.sha256;
+        let expected = retrotools_core::hash::compute_hashes_for_file(&image)
+            .unwrap()
+            .full
+            .sha256;
         assert!(verify_checksum(&image, ChecksumAlgorithm::Sha256, &expected).is_ok());
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -254,7 +298,12 @@ mod tests {
         let dir = temp_dir("checksum-bad");
         let image = dir.join("base.img");
         std::fs::write(&image, b"hello retro world").unwrap();
-        let err = verify_checksum(&image, ChecksumAlgorithm::Sha256, "0000000000000000000000000000000000000000000000000000000000000000").unwrap_err();
+        let err = verify_checksum(
+            &image,
+            ChecksumAlgorithm::Sha256,
+            "0000000000000000000000000000000000000000000000000000000000000000",
+        )
+        .unwrap_err();
         assert!(err.contains("mismatch"));
         std::fs::remove_dir_all(&dir).ok();
     }
@@ -274,7 +323,14 @@ mod tests {
         let image = dir.join("base.img");
         std::fs::write(&image, vec![0xAB; 4096]).unwrap();
         let dest = dir.join("fake-device.bin");
-        let err = write_image(&image, &dest, "\\\\.\\PHYSICALDRIVE9", "\\\\.\\PHYSICALDRIVE1", false).unwrap_err();
+        let err = write_image(
+            &image,
+            &dest,
+            "\\\\.\\PHYSICALDRIVE9",
+            "\\\\.\\PHYSICALDRIVE1",
+            false,
+        )
+        .unwrap_err();
         assert!(err.contains("does not match"));
         assert!(!dest.exists());
         std::fs::remove_dir_all(&dir).ok();
@@ -296,7 +352,9 @@ mod tests {
     fn write_image_writes_identical_bytes_to_a_fake_device_file() {
         let dir = temp_dir("write-real");
         let image = dir.join("base.img");
-        let payload: Vec<u8> = (0..(3 * 1024 * 1024 + 777)).map(|i| (i % 251) as u8).collect();
+        let payload: Vec<u8> = (0..(3 * 1024 * 1024 + 777))
+            .map(|i| (i % 251) as u8)
+            .collect();
         std::fs::write(&image, &payload).unwrap();
         let dest = dir.join("fake-device.bin");
         let log = write_image(&image, &dest, "DEV1", "DEV1", false).unwrap();
@@ -328,7 +386,11 @@ mod tests {
         let source = temp_dir("inject-source");
         std::fs::write(source.join("es_systems.cfg"), "<systemList></systemList>").unwrap();
         std::fs::create_dir_all(source.join("roms").join("snes")).unwrap();
-        std::fs::write(source.join("roms").join("snes").join("game.sfc"), b"romdata").unwrap();
+        std::fs::write(
+            source.join("roms").join("snes").join("game.sfc"),
+            b"romdata",
+        )
+        .unwrap();
 
         let output = temp_dir("inject-output");
         let gs = empty_gameset();

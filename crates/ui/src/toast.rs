@@ -1,17 +1,9 @@
 use egui_notify::Toasts;
-use retrotools_common::error::{AppError, Severity};
 use std::time::Duration;
 
+#[derive(Default)]
 pub struct ToastManager {
     toasts: Toasts,
-}
-
-impl Default for ToastManager {
-    fn default() -> Self {
-        Self {
-            toasts: Toasts::default(),
-        }
-    }
 }
 
 impl ToastManager {
@@ -37,14 +29,6 @@ impl ToastManager {
         self.toasts
             .error(message.into())
             .set_duration(Some(Duration::from_secs(6)));
-    }
-
-    pub fn report(&mut self, error: &AppError) {
-        match error.severity() {
-            Severity::Info => self.info(error.user_message()),
-            Severity::Warning => self.warning(error.user_message()),
-            Severity::Error | Severity::Critical => self.error_message(error.user_message()),
-        }
     }
 
     pub fn show(&mut self, ctx: &egui::Context) {

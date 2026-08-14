@@ -3,17 +3,12 @@ use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum ThemePreference {
     Light,
     Dark,
+    #[default]
     System,
-}
-
-impl Default for ThemePreference {
-    fn default() -> Self {
-        ThemePreference::System
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -265,7 +260,10 @@ mod tests {
 
         assert!(is_portable_mode());
         let expected_root = marker.parent().unwrap().join("data");
-        assert_eq!(config_file_path().unwrap(), expected_root.join("config.toml"));
+        assert_eq!(
+            config_file_path().unwrap(),
+            expected_root.join("config.toml")
+        );
         assert_eq!(log_dir_path().unwrap(), expected_root.join("logs"));
         assert_eq!(trash_dir_path().unwrap(), expected_root.join("trash"));
 

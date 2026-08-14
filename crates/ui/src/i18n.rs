@@ -203,6 +203,9 @@ mod tests {
 
     #[test]
     fn translations_actually_differ_between_languages() {
-        assert_ne!(t(Language::En, Key::TabDashboard), t(Language::Fr, Key::TabDashboard));
+        assert_ne!(
+            t(Language::En, Key::TabDashboard),
+            t(Language::Fr, Key::TabDashboard)
+        );
     }
 }

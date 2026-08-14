@@ -30,7 +30,11 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
         240..=299 => (x, 0.0, c),
         _ => (c, 0.0, x),
     };
-    (((r1 + m) * 255.0) as u8, ((g1 + m) * 255.0) as u8, ((b1 + m) * 255.0) as u8)
+    (
+        ((r1 + m) * 255.0) as u8,
+        ((g1 + m) * 255.0) as u8,
+        ((b1 + m) * 255.0) as u8,
+    )
 }
 
 /// A deterministic color for a platform name — same name always yields the
@@ -75,23 +79,40 @@ pub fn badge_initials(name: &str) -> String {
         .collect();
 
     if words.len() >= 2 {
-        words.iter().take(4).filter_map(|w| w.chars().next()).collect::<String>().to_uppercase()
+        words
+            .iter()
+            .take(4)
+            .filter_map(|w| w.chars().next())
+            .collect::<String>()
+            .to_uppercase()
     } else if let Some(word) = words.first() {
         word.chars().take(3).collect::<String>().to_uppercase()
     } else {
-        name.chars().filter(|c| c.is_alphanumeric()).take(3).collect::<String>().to_uppercase()
+        name.chars()
+            .filter(|c| c.is_alphanumeric())
+            .take(3)
+            .collect::<String>()
+            .to_uppercase()
     }
 }
 
 /// Draws a `size`x`size` circular badge for `name` at the current cursor
 /// position.
 pub fn draw(ui: &mut Ui, name: &str, size: f32) {
-    egui::Frame::none().fill(badge_color(name)).rounding(Rounding::same(size / 2.0)).show(ui, |ui| {
-        ui.set_min_size(egui::vec2(size, size));
-        ui.centered_and_justified(|ui| {
-            ui.label(RichText::new(badge_initials(name)).color(Color32::WHITE).strong().size(size * 0.32));
+    egui::Frame::none()
+        .fill(badge_color(name))
+        .rounding(Rounding::same(size / 2.0))
+        .show(ui, |ui| {
+            ui.set_min_size(egui::vec2(size, size));
+            ui.centered_and_justified(|ui| {
+                ui.label(
+                    RichText::new(badge_initials(name))
+                        .color(Color32::WHITE)
+                        .strong()
+                        .size(size * 0.32),
+                );
+            });
         });
-    });
 }
 
 #[cfg(test)]
@@ -100,17 +121,26 @@ mod tests {
 
     #[test]
     fn same_name_always_yields_the_same_color() {
-        assert_eq!(badge_color("Sony - PlayStation"), badge_color("Sony - PlayStation"));
+        assert_eq!(
+            badge_color("Sony - PlayStation"),
+            badge_color("Sony - PlayStation")
+        );
     }
 
     #[test]
     fn different_names_usually_yield_different_colors() {
-        assert_ne!(badge_color("Sony - PlayStation"), badge_color("Nintendo - Game Boy"));
+        assert_ne!(
+            badge_color("Sony - PlayStation"),
+            badge_color("Nintendo - Game Boy")
+        );
     }
 
     #[test]
     fn extracts_initials_from_a_multi_word_no_intro_style_name() {
-        assert_eq!(badge_initials("Nintendo - Super Nintendo Entertainment System"), "SNES");
+        assert_eq!(
+            badge_initials("Nintendo - Super Nintendo Entertainment System"),
+            "SNES"
+        );
         assert_eq!(badge_initials("Nintendo - Game Boy Advance"), "GBA");
         assert_eq!(badge_initials("Nintendo - Game Boy Color"), "GBC");
     }

@@ -2,7 +2,12 @@ use crate::i18n::Key;
 use crate::state::{AppState, WizardStep};
 use egui::{RichText, ScrollArea, Ui};
 
-fn ordered_list_editor(ui: &mut Ui, id: &str, items: &mut Vec<String>, available: &std::collections::BTreeSet<String>) {
+fn ordered_list_editor(
+    ui: &mut Ui,
+    id: &str,
+    items: &mut Vec<String>,
+    available: &std::collections::BTreeSet<String>,
+) {
     let mut remove_index = None;
     let mut move_up = None;
     let mut move_down = None;
@@ -123,13 +128,19 @@ fn wizard(ui: &mut Ui, state: &mut AppState, gameset: &retrotools_core::GameSet)
     ui.add_space(8.0);
     ui.horizontal(|ui| {
         if ui
-            .add_enabled(state.wizard_step != WizardStep::ChooseDat, egui::Button::new("< Back"))
+            .add_enabled(
+                state.wizard_step != WizardStep::ChooseDat,
+                egui::Button::new("< Back"),
+            )
             .clicked()
         {
             state.wizard_step = state.wizard_step.previous();
         }
         if ui
-            .add_enabled(state.wizard_step != WizardStep::Build, egui::Button::new("Next >"))
+            .add_enabled(
+                state.wizard_step != WizardStep::Build,
+                egui::Button::new("Next >"),
+            )
             .clicked()
         {
             state.wizard_step = state.wizard_step.next();
@@ -171,7 +182,10 @@ fn scan_section(ui: &mut Ui, state: &mut AppState) {
                 let speed = state
                     .scan_speed()
                     .map(|(files_per_sec, bytes_per_sec)| {
-                        format!(" — {files_per_sec:.1} files/s, {:.2} MB/s", bytes_per_sec / 1_000_000.0)
+                        format!(
+                            " — {files_per_sec:.1} files/s, {:.2} MB/s",
+                            bytes_per_sec / 1_000_000.0
+                        )
                     })
                     .unwrap_or_default();
                 ui.label(format!(
@@ -187,7 +201,13 @@ fn scan_section(ui: &mut Ui, state: &mut AppState) {
     ui.add_space(6.0);
     ui.horizontal(|ui| {
         let mut watch_enabled = state.watch_folder_enabled;
-        if ui.checkbox(&mut watch_enabled, "Watch folder for changes (auto re-scan)").changed() {
+        if ui
+            .checkbox(
+                &mut watch_enabled,
+                "Watch folder for changes (auto re-scan)",
+            )
+            .changed()
+        {
             state.set_watch_enabled(watch_enabled);
         }
 
@@ -204,7 +224,10 @@ fn scan_section(ui: &mut Ui, state: &mut AppState) {
                     state.auto_rescan_interval_secs = None;
                 }
                 for minutes in [1u64, 5, 15, 30] {
-                    if ui.selectable_label(false, format!("{minutes} min")).clicked() {
+                    if ui
+                        .selectable_label(false, format!("{minutes} min"))
+                        .clicked()
+                    {
                         state.auto_rescan_interval_secs = Some(minutes * 60);
                     }
                 }
@@ -225,26 +248,29 @@ fn scan_section(ui: &mut Ui, state: &mut AppState) {
         let fix_report = retrotools_core::build_fix_report(report);
         if !fix_report.is_complete() {
             ui.add_space(6.0);
-            egui::CollapsingHeader::new(format!("Fix report ({} action(s) needed)", fix_report.actions.len()))
-                .show(ui, |ui| {
-                    for action in &fix_report.actions {
-                        let text = match action.kind {
-                            retrotools_core::FixActionKind::Obtain => format!(
-                                "[OBTAIN] {} — {} (expected CRC32 {})",
-                                action.game_name,
-                                action.rom_name,
-                                action.expected_crc32.as_deref().unwrap_or("?")
-                            ),
-                            retrotools_core::FixActionKind::Replace => format!(
-                                "[REPLACE] {} — {} (found CRC32 {})",
-                                action.game_name,
-                                action.rom_name,
-                                action.current_crc32.as_deref().unwrap_or("?")
-                            ),
-                        };
-                        ui.label(text);
-                    }
-                });
+            egui::CollapsingHeader::new(format!(
+                "Fix report ({} action(s) needed)",
+                fix_report.actions.len()
+            ))
+            .show(ui, |ui| {
+                for action in &fix_report.actions {
+                    let text = match action.kind {
+                        retrotools_core::FixActionKind::Obtain => format!(
+                            "[OBTAIN] {} — {} (expected CRC32 {})",
+                            action.game_name,
+                            action.rom_name,
+                            action.expected_crc32.as_deref().unwrap_or("?")
+                        ),
+                        retrotools_core::FixActionKind::Replace => format!(
+                            "[REPLACE] {} — {} (found CRC32 {})",
+                            action.game_name,
+                            action.rom_name,
+                            action.current_crc32.as_deref().unwrap_or("?")
+                        ),
+                    };
+                    ui.label(text);
+                }
+            });
         }
     }
 }
@@ -306,14 +332,27 @@ fn rules_section(ui: &mut Ui, state: &mut AppState, gameset: &retrotools_core::G
 
     ui.columns(2, |columns| {
         columns[0].label(RichText::new("Region priority (top = preferred)").weak());
-        ordered_list_editor(&mut columns[0], "region_order_add", &mut state.rules.region_order, &all_regions);
+        ordered_list_editor(
+            &mut columns[0],
+            "region_order_add",
+            &mut state.rules.region_order,
+            &all_regions,
+        );
 
         columns[1].label(RichText::new("Language priority (top = preferred)").weak());
-        ordered_list_editor(&mut columns[1], "language_order_add", &mut state.rules.language_order, &all_languages);
+        ordered_list_editor(
+            &mut columns[1],
+            "language_order_add",
+            &mut state.rules.language_order,
+            &all_languages,
+        );
     });
 
     ui.add_space(10.0);
-    ui.checkbox(&mut state.rules.prefer_parent, "Prefer parent release over clone (tie-break)");
+    ui.checkbox(
+        &mut state.rules.prefer_parent,
+        "Prefer parent release over clone (tie-break)",
+    );
     ui.checkbox(
         &mut state.rules.prefer_retroachievements_compatible,
         "Prefer RetroAchievements-compatible version (tie-break; needs a synced hash cache — Plugins tab)",
@@ -354,14 +393,17 @@ fn preview_section(ui: &mut Ui, state: &mut AppState) {
     ));
     ui.add_space(6.0);
 
-    ScrollArea::vertical().max_height(220.0).id_source("explanations_scroll").show(ui, |ui| {
-        for explanation in &preview.explanations {
-            ui.label(format!(
-                "[{}] kept '{}' — {}",
-                explanation.family, explanation.chosen, explanation.reason
-            ));
-        }
-    });
+    ScrollArea::vertical()
+        .max_height(220.0)
+        .id_source("explanations_scroll")
+        .show(ui, |ui| {
+            for explanation in &preview.explanations {
+                ui.label(format!(
+                    "[{}] kept '{}' — {}",
+                    explanation.family, explanation.chosen, explanation.reason
+                ));
+            }
+        });
 }
 
 fn build_section(ui: &mut Ui, state: &mut AppState) {
@@ -388,17 +430,41 @@ fn build_section(ui: &mut Ui, state: &mut AppState) {
         egui::ComboBox::from_id_source("mode_combo")
             .selected_text(format!("{:?}", state.build_mode))
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut state.build_mode, retrotools_core::TransferMode::Copy, "Copy");
-                ui.selectable_value(&mut state.build_mode, retrotools_core::TransferMode::Move, "Move");
-                ui.selectable_value(&mut state.build_mode, retrotools_core::TransferMode::HardLink, "Hardlink");
-                ui.selectable_value(&mut state.build_mode, retrotools_core::TransferMode::SymLink, "Symlink");
+                ui.selectable_value(
+                    &mut state.build_mode,
+                    retrotools_core::TransferMode::Copy,
+                    "Copy",
+                );
+                ui.selectable_value(
+                    &mut state.build_mode,
+                    retrotools_core::TransferMode::Move,
+                    "Move",
+                );
+                ui.selectable_value(
+                    &mut state.build_mode,
+                    retrotools_core::TransferMode::HardLink,
+                    "Hardlink",
+                );
+                ui.selectable_value(
+                    &mut state.build_mode,
+                    retrotools_core::TransferMode::SymLink,
+                    "Symlink",
+                );
             });
 
         egui::ComboBox::from_id_source("organize_combo")
             .selected_text(format!("{:?}", state.build_organize))
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut state.build_organize, retrotools_core::OrganizeBy::Flat, "Flat");
-                ui.selectable_value(&mut state.build_organize, retrotools_core::OrganizeBy::ByPlatform, "By platform");
+                ui.selectable_value(
+                    &mut state.build_organize,
+                    retrotools_core::OrganizeBy::Flat,
+                    "Flat",
+                );
+                ui.selectable_value(
+                    &mut state.build_organize,
+                    retrotools_core::OrganizeBy::ByPlatform,
+                    "By platform",
+                );
                 ui.selectable_value(
                     &mut state.build_organize,
                     retrotools_core::OrganizeBy::ByPlatformAndRegion,
@@ -407,12 +473,23 @@ fn build_section(ui: &mut Ui, state: &mut AppState) {
             });
     });
 
-    ui.checkbox(&mut state.build_rename_to_dat_name, "Rename files to the DAT's canonical name");
-    ui.checkbox(&mut state.build_dry_run, "Dry run (preview only, no filesystem change)");
+    ui.checkbox(
+        &mut state.build_rename_to_dat_name,
+        "Rename files to the DAT's canonical name",
+    );
+    ui.checkbox(
+        &mut state.build_dry_run,
+        "Dry run (preview only, no filesystem change)",
+    );
 
     ui.add_space(8.0);
-    let can_build = state.build_destination.is_some() && state.selection_preview.is_some() && !state.build_in_progress;
-    if ui.add_enabled(can_build, egui::Button::new("Build 1G1R set")).clicked() {
+    let can_build = state.build_destination.is_some()
+        && state.selection_preview.is_some()
+        && !state.build_in_progress;
+    if ui
+        .add_enabled(can_build, egui::Button::new("Build 1G1R set"))
+        .clicked()
+    {
         if let Some(dest) = state.build_destination.clone() {
             state.start_build(
                 dest,

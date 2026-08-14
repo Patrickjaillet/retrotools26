@@ -16,9 +16,13 @@ fn bench_compute_hashes(c: &mut Criterion) {
         // hash implementations special-case runs of zeros.
         let data: Vec<u8> = (0..size).map(|i| (i % 251) as u8).collect();
         group.throughput(Throughput::Bytes(size as u64));
-        group.bench_with_input(BenchmarkId::from_parameter(format!("{size_mb}MB")), &data, |b, data| {
-            b.iter(|| compute_hashes(Cursor::new(black_box(data.as_slice()))).unwrap());
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(format!("{size_mb}MB")),
+            &data,
+            |b, data| {
+                b.iter(|| compute_hashes(Cursor::new(black_box(data.as_slice()))).unwrap());
+            },
+        );
     }
     group.finish();
 }

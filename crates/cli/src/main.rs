@@ -325,12 +325,10 @@ fn main() {
         Some(Commands::Version) => {
             println!("Retro Tools 2026 {}", current_version());
         }
-        Some(Commands::ConfigPath) => {
-            match retrotools_common::config::config_file_path() {
-                Ok(path) => println!("{}", path.display()),
-                Err(err) => eprintln!("error: {}", err),
-            }
-        }
+        Some(Commands::ConfigPath) => match retrotools_common::config::config_file_path() {
+            Ok(path) => println!("{}", path.display()),
+            Err(err) => eprintln!("error: {}", err),
+        },
         Some(Commands::CheckUpdate { repository }) => run_check_update_command(repository),
         Some(Commands::Dat(dat_command)) => run_dat_command(dat_command),
         Some(Commands::Scan {
@@ -342,7 +340,16 @@ fn main() {
             no_recursive,
             no_archives,
             no_cache,
-        }) => run_scan_command(root, dat, csv, html, pdf, no_recursive, no_archives, no_cache),
+        }) => run_scan_command(
+            root,
+            dat,
+            csv,
+            html,
+            pdf,
+            no_recursive,
+            no_archives,
+            no_cache,
+        ),
         Some(Commands::Select1g1r {
             dat,
             profile,
@@ -389,13 +396,23 @@ fn main() {
             no_cache,
         }) => run_clean_command(root, dat, duplicates, no_unknown, dry_run, no_cache),
         Some(Commands::Undo(undo_command)) => run_undo_command(undo_command),
-        Some(Commands::Fix { root, dat, csv, no_cache }) => run_fix_command(root, dat, csv, no_cache),
-        Some(Commands::Compare { before, after, no_recursive, no_archives }) => {
-            run_compare_command(before, after, no_recursive, no_archives)
-        }
-        Some(Commands::Status { roms_root, dat_dir, no_cache }) => {
-            run_status_command(roms_root, dat_dir, no_cache)
-        }
+        Some(Commands::Fix {
+            root,
+            dat,
+            csv,
+            no_cache,
+        }) => run_fix_command(root, dat, csv, no_cache),
+        Some(Commands::Compare {
+            before,
+            after,
+            no_recursive,
+            no_archives,
+        }) => run_compare_command(before, after, no_recursive, no_archives),
+        Some(Commands::Status {
+            roms_root,
+            dat_dir,
+            no_cache,
+        }) => run_status_command(roms_root, dat_dir, no_cache),
         Some(Commands::Plugin(plugin_command)) => run_plugin_command(plugin_command),
         Some(Commands::Convert(convert_command)) => run_convert_command(convert_command),
         Some(Commands::Sdcard(sdcard_command)) => run_sdcard_command(sdcard_command),
@@ -435,7 +452,12 @@ fn run_dat_command(command: DatCommands) {
         DatCommands::SourceAdd { name, url } => {
             let mut config = AppConfig::load().unwrap_or_default();
             config.dat_sources.retain(|s| s.name != name);
-            config.dat_sources.push(retrotools_common::config::DatSourceEntry { name: name.clone(), url });
+            config
+                .dat_sources
+                .push(retrotools_common::config::DatSourceEntry {
+                    name: name.clone(),
+                    url,
+                });
             match config.save() {
                 Ok(()) => println!("tracked DAT source '{name}'"),
                 Err(err) => eprintln!("error: cannot save config: {err}"),
@@ -481,9 +503,11 @@ fn run_dat_command(command: DatCommands) {
                 run_single_dat_update(entry);
             }
         }
-        DatCommands::DetectMissing { roms_root, dat_dir, assist } => {
-            run_detect_missing_command(roms_root, dat_dir, assist)
-        }
+        DatCommands::DetectMissing {
+            roms_root,
+            dat_dir,
+            assist,
+        } => run_detect_missing_command(roms_root, dat_dir, assist),
     }
 }
 
@@ -498,7 +522,10 @@ fn run_detect_missing_command(roms_root: PathBuf, dat_dir: PathBuf, assist: bool
             }
         }
         Err(err) => {
-            eprintln!("error: cannot read DAT directory '{}': {err}", dat_dir.display());
+            eprintln!(
+                "error: cannot read DAT directory '{}': {err}",
+                dat_dir.display()
+            );
             return;
         }
     }
@@ -506,20 +533,29 @@ fn run_detect_missing_command(roms_root: PathBuf, dat_dir: PathBuf, assist: bool
     let missing = match retrotools_core::platforms_missing_dat(&roms_root, &library) {
         Ok(missing) => missing,
         Err(err) => {
-            eprintln!("error: cannot read ROMs directory '{}': {err}", roms_root.display());
+            eprintln!(
+                "error: cannot read ROMs directory '{}': {err}",
+                roms_root.display()
+            );
             return;
         }
     };
 
     if missing.is_empty() {
-        println!("Every ROM folder under '{}' has a matching DAT.", roms_root.display());
+        println!(
+            "Every ROM folder under '{}' has a matching DAT.",
+            roms_root.display()
+        );
         return;
     }
 
     println!("{} platform folder(s) without a DAT:", missing.len());
     let config = AppConfig::load().unwrap_or_default();
     for name in &missing {
-        let tracked_source = config.dat_sources.iter().find(|s| s.name.eq_ignore_ascii_case(name));
+        let tracked_source = config
+            .dat_sources
+            .iter()
+            .find(|s| s.name.eq_ignore_ascii_case(name));
         match (assist, tracked_source) {
             (true, Some(entry)) => {
                 let source = retrotools_core::DatSource {
@@ -576,7 +612,10 @@ fn run_single_dat_update(entry: &retrotools_common::config::DatSourceEntry) {
                 );
                 if let Some(cache) = &cache {
                     if let Err(err) = cache.store(&report.file_path, &report.gameset) {
-                        eprintln!("warning: fetched but could not cache '{}': {err}", report.name);
+                        eprintln!(
+                            "warning: fetched but could not cache '{}': {err}",
+                            report.name
+                        );
                     }
                 }
             } else {
@@ -722,9 +761,7 @@ fn resolve_profile(name: Option<&str>) -> retrotools_core::RulePriority {
     {
         Ok(profile) => profile.rules,
         Err(err) => {
-            eprintln!(
-                "warning: profile '{name}' not found ({err}), using default rules instead"
-            );
+            eprintln!("warning: profile '{name}' not found ({err}), using default rules instead");
             retrotools_core::RulePriority::default()
         }
     }
@@ -822,7 +859,11 @@ fn scan_and_match(
     root: &std::path::Path,
     dat: &std::path::Path,
     no_cache: bool,
-) -> Option<(retrotools_core::GameSet, retrotools_core::ScanOutcome, retrotools_core::MatchReport)> {
+) -> Option<(
+    retrotools_core::GameSet,
+    retrotools_core::ScanOutcome,
+    retrotools_core::MatchReport,
+)> {
     let gameset = match retrotools_core::dat::parse_dat_file(dat) {
         Ok(gameset) => gameset,
         Err(err) => {
@@ -875,7 +916,9 @@ fn scan_and_match(
 }
 
 fn open_undo_log() -> Option<retrotools_core::UndoLog> {
-    match retrotools_common::config::undo_log_file_path().and_then(|p| retrotools_core::UndoLog::open(&p)) {
+    match retrotools_common::config::undo_log_file_path()
+        .and_then(|p| retrotools_core::UndoLog::open(&p))
+    {
         Ok(log) => Some(log),
         Err(err) => {
             eprintln!("warning: could not open undo log ({err}), operations will not be recorded");
@@ -903,11 +946,14 @@ fn run_build1g1r_command(
 
     let rules = resolve_profile(profile.as_deref());
     let preview = retrotools_core::preview_selection(&gameset.games, &rules);
-    let kept_names: std::collections::HashSet<&str> = preview.kept.iter().map(|g| g.name.as_str()).collect();
+    let kept_names: std::collections::HashSet<&str> =
+        preview.kept.iter().map(|g| g.name.as_str()).collect();
     let mut selected_report = match_report.clone();
-    selected_report
-        .matched
-        .retain(|m| m.matched_game.as_deref().is_some_and(|g| kept_names.contains(g)));
+    selected_report.matched.retain(|m| {
+        m.matched_game
+            .as_deref()
+            .is_some_and(|g| kept_names.contains(g))
+    });
 
     let options = retrotools_core::BuildOptions {
         destination_root: dest,
@@ -948,7 +994,11 @@ fn run_build1g1r_command(
 
     if dry_run {
         for plan in &plans {
-            println!("  {} -> {}", plan.source.display(), plan.destination.display());
+            println!(
+                "  {} -> {}",
+                plan.source.display(),
+                plan.destination.display()
+            );
         }
     } else {
         println!("{ok} transferred, {failed} failed");
@@ -972,11 +1022,14 @@ fn run_rebuild1g1r_command(
 
     let rules = resolve_profile(profile.as_deref());
     let preview = retrotools_core::preview_selection(&gameset.games, &rules);
-    let kept_names: std::collections::HashSet<&str> = preview.kept.iter().map(|g| g.name.as_str()).collect();
+    let kept_names: std::collections::HashSet<&str> =
+        preview.kept.iter().map(|g| g.name.as_str()).collect();
     let mut selected_report = match_report;
-    selected_report
-        .matched
-        .retain(|m| m.matched_game.as_deref().is_some_and(|g| kept_names.contains(g)));
+    selected_report.matched.retain(|m| {
+        m.matched_game
+            .as_deref()
+            .is_some_and(|g| kept_names.contains(g))
+    });
 
     match retrotools_core::rebuild_to_archives(
         &selected_report,
@@ -1045,7 +1098,9 @@ fn run_clean_command(
     };
 
     let undo_log = if dry_run { None } else { open_undo_log() };
-    let batch_id = undo_log.as_ref().and_then(|log| log.new_batch("clean").ok());
+    let batch_id = undo_log
+        .as_ref()
+        .and_then(|log| log.new_batch("clean").ok());
 
     let mut moved = 0;
     for (source, reason) in &to_trash {
@@ -1125,7 +1180,11 @@ fn run_fix_command(root: PathBuf, dat: PathBuf, csv: Option<PathBuf>, no_cache: 
     }
 }
 
-fn scan_only(root: &std::path::Path, no_recursive: bool, no_archives: bool) -> Option<retrotools_core::ScanOutcome> {
+fn scan_only(
+    root: &std::path::Path,
+    no_recursive: bool,
+    no_archives: bool,
+) -> Option<retrotools_core::ScanOutcome> {
     let options = retrotools_core::ScanOptions {
         roots: vec![root.to_path_buf()],
         recursive: !no_recursive,
@@ -1157,7 +1216,10 @@ fn run_status_command(roms_root: PathBuf, dat_dir: PathBuf, no_cache: bool) {
     let import_results = match library.import_dir(&dat_dir) {
         Ok(results) => results,
         Err(err) => {
-            eprintln!("error: cannot read DAT directory '{}': {err}", dat_dir.display());
+            eprintln!(
+                "error: cannot read DAT directory '{}': {err}",
+                dat_dir.display()
+            );
             return;
         }
     };
@@ -1170,7 +1232,10 @@ fn run_status_command(roms_root: PathBuf, dat_dir: PathBuf, no_cache: bool) {
     let entries = match std::fs::read_dir(&roms_root) {
         Ok(entries) => entries,
         Err(err) => {
-            eprintln!("error: cannot read ROMs directory '{}': {err}", roms_root.display());
+            eprintln!(
+                "error: cannot read ROMs directory '{}': {err}",
+                roms_root.display()
+            );
             return;
         }
     };
@@ -1220,11 +1285,17 @@ fn run_status_command(roms_root: PathBuf, dat_dir: PathBuf, no_cache: bool) {
 
     rows.sort_by(|a, b| a.0.cmp(&b.0));
     if rows.is_empty() {
-        println!("No platform subdirectory matched a DAT in '{}'.", dat_dir.display());
+        println!(
+            "No platform subdirectory matched a DAT in '{}'.",
+            dat_dir.display()
+        );
         return;
     }
 
-    println!("{:<30} {:>10} {:>8} {:>8} {:>8}", "Platform", "Complete", "Matched", "Missing", "Corrupt");
+    println!(
+        "{:<30} {:>10} {:>8} {:>8} {:>8}",
+        "Platform", "Complete", "Matched", "Missing", "Corrupt"
+    );
     for (platform, completion, matched, missing, corrupt) in &rows {
         println!("{platform:<30} {completion:>9.1}% {matched:>8} {missing:>8} {corrupt:>8}");
     }
@@ -1235,24 +1306,36 @@ fn build_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_playlists::PlaylistPlugin));
     registry.register(Box::new(retrotools_plugin_playlists::CollectionsPlugin));
     registry.register(Box::new(retrotools_plugin_bios::BiosPlugin));
-    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
-        distro: retrotools_plugin_batocera_export::Distro::Batocera,
-    }));
-    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
-        distro: retrotools_plugin_batocera_export::Distro::Recalbox,
-    }));
-    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
-        distro: retrotools_plugin_batocera_export::Distro::Lakka,
-    }));
+    registry.register(Box::new(
+        retrotools_plugin_batocera_export::BatoceraExportPlugin {
+            distro: retrotools_plugin_batocera_export::Distro::Batocera,
+        },
+    ));
+    registry.register(Box::new(
+        retrotools_plugin_batocera_export::BatoceraExportPlugin {
+            distro: retrotools_plugin_batocera_export::Distro::Recalbox,
+        },
+    ));
+    registry.register(Box::new(
+        retrotools_plugin_batocera_export::BatoceraExportPlugin {
+            distro: retrotools_plugin_batocera_export::Distro::Lakka,
+        },
+    ));
     registry.register(Box::new(retrotools_plugin_saves::SavesBackupPlugin));
     registry.register(Box::new(retrotools_plugin_saves::SavesRestorePlugin));
-    registry.register(Box::new(retrotools_plugin_controllers::ControllerExportPlugin));
+    registry.register(Box::new(
+        retrotools_plugin_controllers::ControllerExportPlugin,
+    ));
     registry.register(Box::new(retrotools_plugin_scraper::ScraperPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
     registry.register(Box::new(retrotools_plugin_core_advisor::CoreAdvisorPlugin));
-    registry.register(Box::new(retrotools_plugin_sdcard_imager::SdCardInjectPlugin));
-    registry.register(Box::new(retrotools_plugin_retroachievements::RetroAchievementsPlugin));
+    registry.register(Box::new(
+        retrotools_plugin_sdcard_imager::SdCardInjectPlugin,
+    ));
+    registry.register(Box::new(
+        retrotools_plugin_retroachievements::RetroAchievementsPlugin,
+    ));
     registry
 }
 
@@ -1265,7 +1348,9 @@ fn run_check_update_command(repository_override: Option<String>) {
         return;
     };
 
-    use retrotools_common::updater::{compare_versions, GitHubReleaseSource, UpdateSource, UpdateStatus};
+    use retrotools_common::updater::{
+        compare_versions, GitHubReleaseSource, UpdateSource, UpdateStatus,
+    };
     let source = GitHubReleaseSource::new(repository);
     match source.check_latest() {
         Ok(Some(release)) => {
@@ -1276,7 +1361,9 @@ fn run_check_update_command(repository_override: Option<String>) {
                     println!("update available: {current} -> {version}");
                     println!("  {}", release.download_url);
                 }
-                UpdateStatus::CheckFailed => unreachable!("compare_versions never returns CheckFailed"),
+                UpdateStatus::CheckFailed => {
+                    unreachable!("compare_versions never returns CheckFailed")
+                }
             }
         }
         Ok(None) => println!("no releases published yet"),
@@ -1286,30 +1373,36 @@ fn run_check_update_command(repository_override: Option<String>) {
 
 fn run_convert_command(command: ConvertCommands) {
     match command {
-        ConvertCommands::ToChd { source, dest } => match retrotools_core::convert_to_chd(&source, &dest) {
-            Ok(path) => println!("wrote '{}'", path.display()),
-            Err(err) => eprintln!("error: {err}"),
-        },
+        ConvertCommands::ToChd { source, dest } => {
+            match retrotools_core::convert_to_chd(&source, &dest) {
+                Ok(path) => println!("wrote '{}'", path.display()),
+                Err(err) => eprintln!("error: {err}"),
+            }
+        }
         ConvertCommands::FromChd { source, dest_dir } => {
             match retrotools_core::convert_from_chd(&source, &dest_dir) {
                 Ok(path) => println!("wrote '{}'", path.display()),
                 Err(err) => eprintln!("error: {err}"),
             }
         }
-        ConvertCommands::ToRvz { source, dest } => match retrotools_core::convert_to_rvz(&source, &dest) {
-            Ok(path) => println!("wrote '{}'", path.display()),
-            Err(err) => eprintln!("error: {err}"),
-        },
+        ConvertCommands::ToRvz { source, dest } => {
+            match retrotools_core::convert_to_rvz(&source, &dest) {
+                Ok(path) => println!("wrote '{}'", path.display()),
+                Err(err) => eprintln!("error: {err}"),
+            }
+        }
         ConvertCommands::FromRvz { source, dest_dir } => {
             match retrotools_core::convert_from_rvz(&source, &dest_dir) {
                 Ok(path) => println!("wrote '{}'", path.display()),
                 Err(err) => eprintln!("error: {err}"),
             }
         }
-        ConvertCommands::ToCso { source, dest } => match retrotools_core::convert_to_cso(&source, &dest) {
-            Ok(path) => println!("wrote '{}'", path.display()),
-            Err(err) => eprintln!("error: {err}"),
-        },
+        ConvertCommands::ToCso { source, dest } => {
+            match retrotools_core::convert_to_cso(&source, &dest) {
+                Ok(path) => println!("wrote '{}'", path.display()),
+                Err(err) => eprintln!("error: {err}"),
+            }
+        }
         ConvertCommands::FromCso { source, dest_dir } => {
             match retrotools_core::convert_from_cso(&source, &dest_dir) {
                 Ok(path) => println!("wrote '{}'", path.display()),
@@ -1328,13 +1421,24 @@ fn run_sdcard_command(command: SdcardCommands) {
                 return;
             }
             for device in devices {
-                println!("{}\t{}\t{} bytes", device.id, device.model, device.size_bytes);
+                println!(
+                    "{}\t{}\t{} bytes",
+                    device.id, device.model, device.size_bytes
+                );
             }
         }
         SdcardCommands::Verify { image, sha256, md5 } => {
             let result = match (sha256, md5) {
-                (Some(expected), None) => retrotools_plugin_sdcard_imager::verify_checksum(&image, retrotools_plugin_sdcard_imager::ChecksumAlgorithm::Sha256, &expected),
-                (None, Some(expected)) => retrotools_plugin_sdcard_imager::verify_checksum(&image, retrotools_plugin_sdcard_imager::ChecksumAlgorithm::Md5, &expected),
+                (Some(expected), None) => retrotools_plugin_sdcard_imager::verify_checksum(
+                    &image,
+                    retrotools_plugin_sdcard_imager::ChecksumAlgorithm::Sha256,
+                    &expected,
+                ),
+                (None, Some(expected)) => retrotools_plugin_sdcard_imager::verify_checksum(
+                    &image,
+                    retrotools_plugin_sdcard_imager::ChecksumAlgorithm::Md5,
+                    &expected,
+                ),
                 _ => Err("pass exactly one of --sha256 or --md5".to_string()),
             };
             match result {
@@ -1342,8 +1446,19 @@ fn run_sdcard_command(command: SdcardCommands) {
                 Err(err) => eprintln!("error: {err}"),
             }
         }
-        SdcardCommands::Write { image, device, confirm, dry_run } => {
-            match retrotools_plugin_sdcard_imager::write_image(&image, Path::new(&device), &device, &confirm, dry_run) {
+        SdcardCommands::Write {
+            image,
+            device,
+            confirm,
+            dry_run,
+        } => {
+            match retrotools_plugin_sdcard_imager::write_image(
+                &image,
+                Path::new(&device),
+                &device,
+                &confirm,
+                dry_run,
+            ) {
                 Ok(log) => {
                     for line in log {
                         println!("{line}");
@@ -1365,7 +1480,14 @@ fn run_plugin_command(command: PluginCommands) {
                 println!("  {}", plugin.description());
             }
         }
-        PluginCommands::Run { id, dat, output, source, profile, dry_run } => {
+        PluginCommands::Run {
+            id,
+            dat,
+            output,
+            source,
+            profile,
+            dry_run,
+        } => {
             let gameset = match retrotools_core::dat::parse_dat_file(&dat) {
                 Ok(gameset) => gameset,
                 Err(err) => {

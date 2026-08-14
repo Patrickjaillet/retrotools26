@@ -54,12 +54,24 @@ fn scan_match_select_and_build_pipeline_produces_the_expected_files() {
         scan_inside_archives: true,
     };
     let outcome = scan(&scan_options, None, None).unwrap();
-    assert_eq!(outcome.roms.len(), 4, "all 4 files on disk should be hashed");
+    assert_eq!(
+        outcome.roms.len(),
+        4,
+        "all 4 files on disk should be hashed"
+    );
     assert!(outcome.errors.is_empty());
 
     let match_report = match_scan(&gameset, &outcome.roms);
-    assert_eq!(match_report.matched.len(), 3, "3 files match a DAT rom by CRC32");
-    assert_eq!(match_report.unknown.len(), 1, "junk.txt matches nothing in the DAT");
+    assert_eq!(
+        match_report.matched.len(),
+        3,
+        "3 files match a DAT rom by CRC32"
+    );
+    assert_eq!(
+        match_report.unknown.len(),
+        1,
+        "junk.txt matches nothing in the DAT"
+    );
     assert!(match_report.missing.is_empty());
     assert!(match_report.corrupt.is_empty());
 
@@ -73,9 +85,11 @@ fn scan_match_select_and_build_pipeline_produces_the_expected_files() {
     assert!(kept_names.contains("Other Game (USA)"));
 
     let mut selected_report = match_report.clone();
-    selected_report
-        .matched
-        .retain(|m| m.matched_game.as_deref().is_some_and(|g| kept_names.contains(g)));
+    selected_report.matched.retain(|m| {
+        m.matched_game
+            .as_deref()
+            .is_some_and(|g| kept_names.contains(g))
+    });
     assert_eq!(selected_report.matched.len(), 2);
 
     let dest_root = temp_dir("pipeline-dest");
@@ -89,13 +103,24 @@ fn scan_match_select_and_build_pipeline_produces_the_expected_files() {
     assert_eq!(plans.len(), 2);
 
     let undo_log = UndoLog::open_in_memory().unwrap();
-    let (outcomes, batch_id) =
-        execute_build(&plans, false, true, Some(&undo_log), "integration test build").unwrap();
-    let batch_id = batch_id.expect("a real (non-dry-run) build with an undo log returns a batch id");
+    let (outcomes, batch_id) = execute_build(
+        &plans,
+        false,
+        true,
+        Some(&undo_log),
+        "integration test build",
+    )
+    .unwrap();
+    let batch_id =
+        batch_id.expect("a real (non-dry-run) build with an undo log returns a batch id");
 
     for outcome in &outcomes {
         assert!(outcome.performed, "transfer failed: {:?}", outcome.error);
-        assert_eq!(outcome.verified, Some(true), "post-copy hash verification should pass");
+        assert_eq!(
+            outcome.verified,
+            Some(true),
+            "post-copy hash verification should pass"
+        );
     }
 
     let platform_dir = dest_root.join(gameset.platform);
@@ -103,9 +128,15 @@ fn scan_match_select_and_build_pipeline_produces_the_expected_files() {
     let other_dest = platform_dir.join("Other Game (USA).bin");
     let usa_dest = platform_dir.join("Test Game (USA).bin");
 
-    assert!(europe_dest.is_file(), "the kept Europe release should be on disk");
+    assert!(
+        europe_dest.is_file(),
+        "the kept Europe release should be on disk"
+    );
     assert!(other_dest.is_file(), "the unrelated game should be on disk");
-    assert!(!usa_dest.exists(), "the dropped USA duplicate must never be written");
+    assert!(
+        !usa_dest.exists(),
+        "the dropped USA duplicate must never be written"
+    );
     assert_eq!(std::fs::read(&europe_dest).unwrap(), b"europe-a");
     assert_eq!(std::fs::read(&other_dest).unwrap(), b"other");
 

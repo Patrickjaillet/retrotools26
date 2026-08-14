@@ -2,8 +2,8 @@ use crate::archive::{self, ArchiveKind};
 use crate::cache::ScanCache;
 use crate::hash::{self, FileHashes, HashResult};
 use crate::header::RomHeaderKind;
-use retrotools_common::error::AppResult;
 use rayon::prelude::*;
+use retrotools_common::error::AppResult;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -224,15 +224,12 @@ pub fn scan(
             let result = match hash_result {
                 Ok(hr) => {
                     bytes_counter.fetch_add(hr.full.size, Ordering::Relaxed);
-                    let file_name = unit
-                        .archive_entry
-                        .clone()
-                        .unwrap_or_else(|| {
-                            unit.path
-                                .file_name()
-                                .map(|n| n.to_string_lossy().to_string())
-                                .unwrap_or_default()
-                        });
+                    let file_name = unit.archive_entry.clone().unwrap_or_else(|| {
+                        unit.path
+                            .file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_default()
+                    });
                     Ok(ScannedRom {
                         platform_hint: unit.platform_hint,
                         source_path: unit.path,
@@ -279,7 +276,8 @@ mod tests {
     use std::io::Write;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-scan-test-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-scan-test-{name}-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }

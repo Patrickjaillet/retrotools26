@@ -10,7 +10,10 @@ use crate::error::{AppError, AppResult};
 /// here (the project targets Windows only, per `ROADMAP.md`).
 pub fn encrypt_to_base64(plaintext: &str) -> AppResult<String> {
     let bytes = platform::protect(plaintext.as_bytes())?;
-    Ok(base64::Engine::encode(&base64::engine::general_purpose::STANDARD, bytes))
+    Ok(base64::Engine::encode(
+        &base64::engine::general_purpose::STANDARD,
+        bytes,
+    ))
 }
 
 /// Reverses [`encrypt_to_base64`]. Fails if the blob was encrypted under a
@@ -20,7 +23,8 @@ pub fn decrypt_from_base64(encoded: &str) -> AppResult<String> {
     let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)
         .map_err(|e| AppError::Config(format!("malformed encrypted value: {e}")))?;
     let plain = platform::unprotect(&bytes)?;
-    String::from_utf8(plain).map_err(|e| AppError::Config(format!("decrypted value is not valid UTF-8: {e}")))
+    String::from_utf8(plain)
+        .map_err(|e| AppError::Config(format!("decrypted value is not valid UTF-8: {e}")))
 }
 
 #[cfg(windows)]
@@ -28,7 +32,9 @@ mod platform {
     use super::AppResult;
     use crate::error::AppError;
     use windows_sys::Win32::Foundation::LocalFree;
-    use windows_sys::Win32::Security::Cryptography::{CryptProtectData, CryptUnprotectData, CRYPT_INTEGER_BLOB};
+    use windows_sys::Win32::Security::Cryptography::{
+        CryptProtectData, CryptUnprotectData, CRYPT_INTEGER_BLOB,
+    };
 
     fn blob(data: &[u8]) -> CRYPT_INTEGER_BLOB {
         CRYPT_INTEGER_BLOB {
@@ -90,11 +96,15 @@ mod platform {
     use crate::error::AppError;
 
     pub fn protect(_data: &[u8]) -> AppResult<Vec<u8>> {
-        Err(AppError::Config("encrypted credential storage is only implemented on Windows".into()))
+        Err(AppError::Config(
+            "encrypted credential storage is only implemented on Windows".into(),
+        ))
     }
 
     pub fn unprotect(_data: &[u8]) -> AppResult<Vec<u8>> {
-        Err(AppError::Config("encrypted credential storage is only implemented on Windows".into()))
+        Err(AppError::Config(
+            "encrypted credential storage is only implemented on Windows".into(),
+        ))
     }
 }
 
@@ -107,7 +117,10 @@ mod tests {
         let secret = "hunter2-très-sécurisé";
         let encrypted = encrypt_to_base64(secret).unwrap();
         assert_ne!(encrypted, secret, "ciphertext must not equal the plaintext");
-        assert!(!encrypted.contains("hunter2"), "plaintext must not leak into the stored blob");
+        assert!(
+            !encrypted.contains("hunter2"),
+            "plaintext must not leak into the stored blob"
+        );
         let decrypted = decrypt_from_base64(&encrypted).unwrap();
         assert_eq!(decrypted, secret);
     }

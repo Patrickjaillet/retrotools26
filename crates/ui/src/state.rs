@@ -1,6 +1,6 @@
 use retrotools_common::config::AppConfig;
 use retrotools_core::{
-    DatLibrary, FolderWatcher, MatchReport, RuleProfile, RulePriority, ScanOptions, ScanOutcome,
+    DatLibrary, FolderWatcher, MatchReport, RulePriority, RuleProfile, ScanOptions, ScanOutcome,
     ScanProgress, SelectionResult, TransferOutcome,
 };
 use std::collections::HashMap;
@@ -14,24 +14,36 @@ fn default_plugin_registry() -> retrotools_plugin_api::PluginRegistry {
     registry.register(Box::new(retrotools_plugin_playlists::PlaylistPlugin));
     registry.register(Box::new(retrotools_plugin_playlists::CollectionsPlugin));
     registry.register(Box::new(retrotools_plugin_bios::BiosPlugin));
-    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
-        distro: retrotools_plugin_batocera_export::Distro::Batocera,
-    }));
-    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
-        distro: retrotools_plugin_batocera_export::Distro::Recalbox,
-    }));
-    registry.register(Box::new(retrotools_plugin_batocera_export::BatoceraExportPlugin {
-        distro: retrotools_plugin_batocera_export::Distro::Lakka,
-    }));
+    registry.register(Box::new(
+        retrotools_plugin_batocera_export::BatoceraExportPlugin {
+            distro: retrotools_plugin_batocera_export::Distro::Batocera,
+        },
+    ));
+    registry.register(Box::new(
+        retrotools_plugin_batocera_export::BatoceraExportPlugin {
+            distro: retrotools_plugin_batocera_export::Distro::Recalbox,
+        },
+    ));
+    registry.register(Box::new(
+        retrotools_plugin_batocera_export::BatoceraExportPlugin {
+            distro: retrotools_plugin_batocera_export::Distro::Lakka,
+        },
+    ));
     registry.register(Box::new(retrotools_plugin_saves::SavesBackupPlugin));
     registry.register(Box::new(retrotools_plugin_saves::SavesRestorePlugin));
-    registry.register(Box::new(retrotools_plugin_controllers::ControllerExportPlugin));
+    registry.register(Box::new(
+        retrotools_plugin_controllers::ControllerExportPlugin,
+    ));
     registry.register(Box::new(retrotools_plugin_scraper::ScraperPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderOverridesPlugin));
     registry.register(Box::new(retrotools_plugin_shaders::ShaderCleanupPlugin));
     registry.register(Box::new(retrotools_plugin_core_advisor::CoreAdvisorPlugin));
-    registry.register(Box::new(retrotools_plugin_sdcard_imager::SdCardInjectPlugin));
-    registry.register(Box::new(retrotools_plugin_retroachievements::RetroAchievementsPlugin));
+    registry.register(Box::new(
+        retrotools_plugin_sdcard_imager::SdCardInjectPlugin,
+    ));
+    registry.register(Box::new(
+        retrotools_plugin_retroachievements::RetroAchievementsPlugin,
+    ));
     registry
 }
 
@@ -58,8 +70,14 @@ enum BuildMessage {
 }
 
 enum DatUpdateMessage {
-    Done { name: String, result: Result<String, String> },
-    MissingDatDownloaded { platform_name: String, result: Result<PathBuf, String> },
+    Done {
+        name: String,
+        result: Result<String, String>,
+    },
+    MissingDatDownloaded {
+        platform_name: String,
+        result: Result<PathBuf, String>,
+    },
 }
 
 enum AppUpdateMessage {
@@ -299,16 +317,23 @@ impl AppState {
             || self.screenscraper_user_id_input.is_empty()
             || self.screenscraper_user_password_input.is_empty()
         {
-            self.toast(ToastKind::Warning, "Fill in developer ID/password and account ID/password first");
+            self.toast(
+                ToastKind::Warning,
+                "Fill in developer ID/password and account ID/password first",
+            );
             return;
         }
         let encrypted = (|| -> Result<_, String> {
             Ok(retrotools_common::config::ScreenScraperCredentials {
-                dev_id_encrypted: encrypt_to_base64(&self.screenscraper_dev_id_input).map_err(|e| e.to_string())?,
-                dev_password_encrypted: encrypt_to_base64(&self.screenscraper_dev_password_input).map_err(|e| e.to_string())?,
+                dev_id_encrypted: encrypt_to_base64(&self.screenscraper_dev_id_input)
+                    .map_err(|e| e.to_string())?,
+                dev_password_encrypted: encrypt_to_base64(&self.screenscraper_dev_password_input)
+                    .map_err(|e| e.to_string())?,
                 software_name: self.screenscraper_software_name_input.clone(),
-                user_id_encrypted: encrypt_to_base64(&self.screenscraper_user_id_input).map_err(|e| e.to_string())?,
-                user_password_encrypted: encrypt_to_base64(&self.screenscraper_user_password_input).map_err(|e| e.to_string())?,
+                user_id_encrypted: encrypt_to_base64(&self.screenscraper_user_id_input)
+                    .map_err(|e| e.to_string())?,
+                user_password_encrypted: encrypt_to_base64(&self.screenscraper_user_password_input)
+                    .map_err(|e| e.to_string())?,
             })
         })();
         match encrypted {
@@ -320,12 +345,20 @@ impl AppState {
                         self.screenscraper_dev_password_input.clear();
                         self.screenscraper_user_id_input.clear();
                         self.screenscraper_user_password_input.clear();
-                        self.toast(ToastKind::Success, "ScreenScraper credentials saved (encrypted)");
+                        self.toast(
+                            ToastKind::Success,
+                            "ScreenScraper credentials saved (encrypted)",
+                        );
                     }
-                    Err(err) => self.toast(ToastKind::Error, format!("Cannot save settings: {err}")),
+                    Err(err) => {
+                        self.toast(ToastKind::Error, format!("Cannot save settings: {err}"))
+                    }
                 }
             }
-            Err(err) => self.toast(ToastKind::Error, format!("Cannot encrypt credentials: {err}")),
+            Err(err) => self.toast(
+                ToastKind::Error,
+                format!("Cannot encrypt credentials: {err}"),
+            ),
         }
     }
 
@@ -359,8 +392,12 @@ impl AppState {
                 retrotools_plugin_shaders::ShaderScope::System
             },
             core_name: self.shader_new_core.trim().to_string(),
-            content_dir_name: self.shader_new_is_game.then(|| self.shader_new_content_dir.trim().to_string()),
-            game_name: self.shader_new_is_game.then(|| self.shader_new_game.trim().to_string()),
+            content_dir_name: self
+                .shader_new_is_game
+                .then(|| self.shader_new_content_dir.trim().to_string()),
+            game_name: self
+                .shader_new_is_game
+                .then(|| self.shader_new_game.trim().to_string()),
             preset: self.shader_new_preset.trim().to_string(),
         };
         if let Err(err) = assoc.validate() {
@@ -378,7 +415,10 @@ impl AppState {
                 self.shader_new_preset.clear();
                 self.toast(ToastKind::Success, "Shader association saved");
             }
-            Err(err) => self.toast(ToastKind::Error, format!("Cannot save shader association: {err}")),
+            Err(err) => self.toast(
+                ToastKind::Error,
+                format!("Cannot save shader association: {err}"),
+            ),
         }
     }
 
@@ -390,38 +430,57 @@ impl AppState {
         updated.remove(index);
         match retrotools_plugin_shaders::save_associations(&updated) {
             Ok(()) => self.shader_associations = updated,
-            Err(err) => self.toast(ToastKind::Error, format!("Cannot save shader associations: {err}")),
+            Err(err) => self.toast(
+                ToastKind::Error,
+                format!("Cannot save shader associations: {err}"),
+            ),
         }
     }
 
     pub fn save_retroachievements_credentials(&mut self) {
         use retrotools_common::secrets::encrypt_to_base64;
-        if self.retroachievements_username_input.is_empty() || self.retroachievements_api_key_input.is_empty() {
-            self.toast(ToastKind::Warning, "Fill in your username and API key first");
+        if self.retroachievements_username_input.is_empty()
+            || self.retroachievements_api_key_input.is_empty()
+        {
+            self.toast(
+                ToastKind::Warning,
+                "Fill in your username and API key first",
+            );
             return;
         }
-        let encrypted = encrypt_to_base64(&self.retroachievements_api_key_input).map_err(|e| e.to_string());
+        let encrypted =
+            encrypt_to_base64(&self.retroachievements_api_key_input).map_err(|e| e.to_string());
         match encrypted {
             Ok(api_key_encrypted) => {
-                self.config.retroachievements = retrotools_common::config::RetroAchievementsCredentials {
-                    username: self.retroachievements_username_input.clone(),
-                    api_key_encrypted,
-                };
+                self.config.retroachievements =
+                    retrotools_common::config::RetroAchievementsCredentials {
+                        username: self.retroachievements_username_input.clone(),
+                        api_key_encrypted,
+                    };
                 match self.config.save() {
                     Ok(()) => {
                         self.retroachievements_username_input.clear();
                         self.retroachievements_api_key_input.clear();
-                        self.toast(ToastKind::Success, "RetroAchievements credentials saved (encrypted)");
+                        self.toast(
+                            ToastKind::Success,
+                            "RetroAchievements credentials saved (encrypted)",
+                        );
                     }
-                    Err(err) => self.toast(ToastKind::Error, format!("Cannot save settings: {err}")),
+                    Err(err) => {
+                        self.toast(ToastKind::Error, format!("Cannot save settings: {err}"))
+                    }
                 }
             }
-            Err(err) => self.toast(ToastKind::Error, format!("Cannot encrypt credentials: {err}")),
+            Err(err) => self.toast(
+                ToastKind::Error,
+                format!("Cannot encrypt credentials: {err}"),
+            ),
         }
     }
 
     pub fn clear_retroachievements_credentials(&mut self) {
-        self.config.retroachievements = retrotools_common::config::RetroAchievementsCredentials::default();
+        self.config.retroachievements =
+            retrotools_common::config::RetroAchievementsCredentials::default();
         if let Err(err) = self.config.save() {
             self.toast(ToastKind::Error, format!("Cannot save settings: {err}"));
         } else {
@@ -432,10 +491,17 @@ impl AppState {
     pub fn import_core_advisor_database(&mut self, path: &std::path::Path) {
         match retrotools_plugin_core_advisor::import_database_file(path) {
             Ok(count) => {
-                self.core_advisor_db = retrotools_plugin_core_advisor::load_database().unwrap_or_default();
-                self.toast(ToastKind::Success, format!("Imported {count} core recommendation(s)"));
+                self.core_advisor_db =
+                    retrotools_plugin_core_advisor::load_database().unwrap_or_default();
+                self.toast(
+                    ToastKind::Success,
+                    format!("Imported {count} core recommendation(s)"),
+                );
             }
-            Err(err) => self.toast(ToastKind::Error, format!("Cannot import core database: {err}")),
+            Err(err) => self.toast(
+                ToastKind::Error,
+                format!("Cannot import core database: {err}"),
+            ),
         }
     }
 
@@ -449,7 +515,10 @@ impl AppState {
         self.config.dat_sources.retain(|s| s.name != name);
         self.config
             .dat_sources
-            .push(retrotools_common::config::DatSourceEntry { name: name.clone(), url });
+            .push(retrotools_common::config::DatSourceEntry {
+                name: name.clone(),
+                url,
+            });
         if let Err(err) = self.config.save() {
             self.toast(ToastKind::Error, format!("Cannot save settings: {err}"));
             return;
@@ -483,8 +552,8 @@ impl AppState {
 
         std::thread::spawn(move || {
             let result = (|| -> Result<String, String> {
-                let download_dir = retrotools_common::config::managed_dat_dir_path()
-                    .map_err(|e| e.to_string())?;
+                let download_dir =
+                    retrotools_common::config::managed_dat_dir_path().map_err(|e| e.to_string())?;
                 let cache = retrotools_common::config::dat_cache_file_path()
                     .and_then(|p| retrotools_core::DatCache::open(&p))
                     .ok();
@@ -537,7 +606,10 @@ impl AppState {
         }
         self.missing_dat_platforms = missing.into_iter().collect();
         if self.missing_dat_platforms.is_empty() {
-            self.toast(ToastKind::Success, "Every configured ROM directory has a matching DAT");
+            self.toast(
+                ToastKind::Success,
+                "Every configured ROM directory has a matching DAT",
+            );
         }
     }
 
@@ -569,7 +641,10 @@ impl AppState {
                     retrotools_common::config::managed_dat_dir_path().map_err(|e| e.to_string())?;
                 retrotools_core::download_dat(&source, &download_dir).map_err(|e| e.to_string())
             })();
-            let _ = tx.send(DatUpdateMessage::MissingDatDownloaded { platform_name, result });
+            let _ = tx.send(DatUpdateMessage::MissingDatDownloaded {
+                platform_name,
+                result,
+            });
         });
     }
 
@@ -610,11 +685,17 @@ impl AppState {
 
     pub fn run_plugin(&mut self, plugin_id: &str) {
         let Some(gameset) = self.current_gameset() else {
-            self.toast(ToastKind::Warning, "Select a platform (import a DAT) before running a plugin");
+            self.toast(
+                ToastKind::Warning,
+                "Select a platform (import a DAT) before running a plugin",
+            );
             return;
         };
         let Some(output_dir) = self.plugin_output_dir.clone() else {
-            self.toast(ToastKind::Warning, "Choose an output folder for the plugin first");
+            self.toast(
+                ToastKind::Warning,
+                "Choose an output folder for the plugin first",
+            );
             return;
         };
 
@@ -688,7 +769,10 @@ impl AppState {
             return;
         }
         let Some(gameset) = self.current_gameset() else {
-            self.toast(ToastKind::Warning, "Select a platform (import a DAT) before scanning");
+            self.toast(
+                ToastKind::Warning,
+                "Select a platform (import a DAT) before scanning",
+            );
             return;
         };
         let _ = gameset;
@@ -739,13 +823,19 @@ impl AppState {
         }
         let Some(root) = self.rom_root.clone() else {
             self.watch_folder_enabled = false;
-            self.toast(ToastKind::Warning, "Choose a ROM folder before enabling the watcher");
+            self.toast(
+                ToastKind::Warning,
+                "Choose a ROM folder before enabling the watcher",
+            );
             return;
         };
         match FolderWatcher::watch(&root) {
             Ok(watcher) => {
                 self.folder_watcher = Some(watcher);
-                self.toast(ToastKind::Info, format!("Watching '{}' for changes", root.display()));
+                self.toast(
+                    ToastKind::Info,
+                    format!("Watching '{}' for changes", root.display()),
+                );
             }
             Err(err) => {
                 self.watch_folder_enabled = false;
@@ -805,7 +895,10 @@ impl AppState {
                     {
                         self.toast(
                             ToastKind::Info,
-                            format!("Retro Tools 2026 {} is available (you have {current})", release.version),
+                            format!(
+                                "Retro Tools 2026 {} is available (you have {current})",
+                                release.version
+                            ),
                         );
                         self.available_update = Some(release);
                     } else {
@@ -826,13 +919,20 @@ impl AppState {
                     }
                     self.dat_source_last_results.insert(name, result);
                 }
-                DatUpdateMessage::MissingDatDownloaded { platform_name, result } => {
+                DatUpdateMessage::MissingDatDownloaded {
+                    platform_name,
+                    result,
+                } => {
                     self.dat_sources_updating.remove(&platform_name);
                     match result {
                         Ok(path) => match self.library.import_file(&path) {
                             Ok(_) => {
-                                self.missing_dat_platforms.retain(|p| !p.eq_ignore_ascii_case(&platform_name));
-                                self.toast(ToastKind::Success, format!("Imported DAT for '{platform_name}'"));
+                                self.missing_dat_platforms
+                                    .retain(|p| !p.eq_ignore_ascii_case(&platform_name));
+                                self.toast(
+                                    ToastKind::Success,
+                                    format!("Imported DAT for '{platform_name}'"),
+                                );
                             }
                             Err(err) => self.toast(
                                 ToastKind::Error,
@@ -860,12 +960,15 @@ impl AppState {
                         let matched_count = outcome.roms.len();
                         let error_count = outcome.errors.len();
                         if let Some(gameset) = self.current_gameset() {
-                            self.match_report = Some(retrotools_core::match_scan(gameset, &outcome.roms));
+                            self.match_report =
+                                Some(retrotools_core::match_scan(gameset, &outcome.roms));
                         }
                         self.scan_outcome = Some(outcome);
                         self.toast(
                             ToastKind::Success,
-                            format!("Scan complete: {matched_count} file(s), {error_count} error(s)"),
+                            format!(
+                                "Scan complete: {matched_count} file(s), {error_count} error(s)"
+                            ),
                         );
                     }
                     Err(err) => self.toast(ToastKind::Error, format!("Scan failed: {err}")),
@@ -885,7 +988,10 @@ impl AppState {
                 self.build_rx = None;
                 match result {
                     Ok((outcomes, batch_id)) => {
-                        let ok = outcomes.iter().filter(|o| o.performed && o.error.is_none()).count();
+                        let ok = outcomes
+                            .iter()
+                            .filter(|o| o.performed && o.error.is_none())
+                            .count();
                         let failed = outcomes.iter().filter(|o| o.error.is_some()).count();
                         self.last_build_summary = Some(format!(
                             "{ok} transferred, {failed} failed{}",
@@ -911,12 +1017,16 @@ impl AppState {
         };
         let platform = gameset.platform.clone();
         if self.rules.prefer_retroachievements_compatible {
-            self.rules.retroachievements_compatible_roms = retrotools_plugin_retroachievements::load_cached_hashes_for_platform(&platform);
+            self.rules.retroachievements_compatible_roms =
+                retrotools_plugin_retroachievements::load_cached_hashes_for_platform(&platform);
         }
         let Some(gameset) = self.current_gameset() else {
             return;
         };
-        self.selection_preview = Some(retrotools_core::preview_selection(&gameset.games, &self.rules));
+        self.selection_preview = Some(retrotools_core::preview_selection(
+            &gameset.games,
+            &self.rules,
+        ));
         self.toast(ToastKind::Info, "1G1R preview updated");
     }
 
@@ -930,11 +1040,18 @@ impl AppState {
         let store = match retrotools_common::config::profiles_dir_path() {
             Ok(dir) => retrotools_core::ProfileStore::new(dir),
             Err(err) => {
-                self.toast(ToastKind::Error, format!("Cannot resolve profiles directory: {err}"));
+                self.toast(
+                    ToastKind::Error,
+                    format!("Cannot resolve profiles directory: {err}"),
+                );
                 return;
             }
         };
-        let profile = RuleProfile::new(name.clone(), self.selected_platform.clone(), self.rules.clone());
+        let profile = RuleProfile::new(
+            name.clone(),
+            self.selected_platform.clone(),
+            self.rules.clone(),
+        );
         match store.save(&profile) {
             Ok(_) => {
                 self.active_profile_name = Some(name.clone());
@@ -951,7 +1068,10 @@ impl AppState {
         {
             Ok(profiles) => profiles,
             Err(err) => {
-                self.toast(ToastKind::Warning, format!("Cannot list saved profiles: {err}"));
+                self.toast(
+                    ToastKind::Warning,
+                    format!("Cannot list saved profiles: {err}"),
+                );
                 Vec::new()
             }
         }
@@ -983,9 +1103,11 @@ impl AppState {
         let kept_names: std::collections::HashSet<String> =
             preview.kept.iter().map(|g| g.name.clone()).collect();
         let mut selected_report = match_report;
-        selected_report
-            .matched
-            .retain(|m| m.matched_game.as_deref().is_some_and(|g| kept_names.contains(g)));
+        selected_report.matched.retain(|m| {
+            m.matched_game
+                .as_deref()
+                .is_some_and(|g| kept_names.contains(g))
+        });
 
         self.build_in_progress = true;
         let (tx, rx) = std::sync::mpsc::channel::<BuildMessage>();
@@ -1009,8 +1131,9 @@ impl AppState {
                     .ok()
             };
             let label = format!("build1g1r {platform}");
-            let result = retrotools_core::execute_build(&plans, dry_run, true, undo_log.as_ref(), &label)
-                .map_err(|e| e.to_string());
+            let result =
+                retrotools_core::execute_build(&plans, dry_run, true, undo_log.as_ref(), &label)
+                    .map_err(|e| e.to_string());
             let _ = tx.send(BuildMessage::Done(result));
         });
     }

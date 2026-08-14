@@ -65,7 +65,11 @@ pub fn build_fix_report(match_report: &MatchReport) -> FixReport {
         current_crc32: Some(rom_match.scanned.hashes.crc32.clone()),
     }));
 
-    actions.sort_by(|a, b| a.game_name.cmp(&b.game_name).then_with(|| a.rom_name.cmp(&b.rom_name)));
+    actions.sort_by(|a, b| {
+        a.game_name
+            .cmp(&b.game_name)
+            .then_with(|| a.rom_name.cmp(&b.rom_name))
+    });
 
     FixReport {
         platform: match_report.platform.clone(),
@@ -82,7 +86,10 @@ impl FixReport {
     /// Human-readable, line-oriented report suitable for the terminal.
     pub fn to_text(&self) -> String {
         if self.actions.is_empty() {
-            return format!("{}: set is complete (100%). Nothing to fix.\n", self.platform);
+            return format!(
+                "{}: set is complete (100%). Nothing to fix.\n",
+                self.platform
+            );
         }
 
         let mut out = format!(
@@ -129,7 +136,9 @@ impl FixReport {
     }
 
     pub fn to_csv(&self) -> String {
-        let mut out = String::from("action,game,rom,expected_crc32,expected_size,current_file,current_crc32\n");
+        let mut out = String::from(
+            "action,game,rom,expected_crc32,expected_size,current_file,current_crc32\n",
+        );
         for action in &self.actions {
             out.push_str(&format!(
                 "{},{},{},{},{},{},{}\n",
@@ -212,7 +221,10 @@ mod tests {
     #[test]
     fn reports_complete_when_nothing_to_fix() {
         let gameset = parse_dat_str(SAMPLE, "Test").unwrap();
-        let scan = vec![scanned("game-a.bin", "b1f7f5a0"), scanned("game-b.bin", "ffffffff")];
+        let scan = vec![
+            scanned("game-a.bin", "b1f7f5a0"),
+            scanned("game-b.bin", "ffffffff"),
+        ];
         let match_report = match_scan(&gameset, &scan);
         let fix = build_fix_report(&match_report);
 

@@ -12,7 +12,10 @@ pub struct ControllerProfile {
 
 impl ControllerProfile {
     pub fn get(&self, key: &str) -> Option<&str> {
-        self.entries.iter().find(|(k, _)| k == key).map(|(_, v)| v.as_str())
+        self.entries
+            .iter()
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v.as_str())
     }
 
     pub fn device_name(&self) -> Option<&str> {
@@ -206,15 +209,25 @@ impl Plugin for ControllerExportPlugin {
 
         let (valid, invalid) = list_library(source_dir).map_err(|e| e.to_string())?;
         if valid.is_empty() && invalid.is_empty() {
-            return Err(format!("no .cfg profiles found in '{}'", source_dir.display()));
+            return Err(format!(
+                "no .cfg profiles found in '{}'",
+                source_dir.display()
+            ));
         }
 
         if ctx.dry_run {
-            let mut summary = format!("[dry run] would export {} valid profile(s) to '{}'", valid.len(), ctx.output_dir.display());
+            let mut summary = format!(
+                "[dry run] would export {} valid profile(s) to '{}'",
+                valid.len(),
+                ctx.output_dir.display()
+            );
             if !invalid.is_empty() {
                 summary.push_str(&format!("; {} profile(s) skipped (invalid)", invalid.len()));
             }
-            return Ok(PluginOutcome { summary, files_written: Vec::new() });
+            return Ok(PluginOutcome {
+                summary,
+                files_written: Vec::new(),
+            });
         }
 
         std::fs::create_dir_all(ctx.output_dir).map_err(|e| e.to_string())?;
@@ -222,20 +235,38 @@ impl Plugin for ControllerExportPlugin {
         for (path, _) in &valid {
             let file_name = path.file_name().ok_or("profile path has no file name")?;
             let dest = ctx.output_dir.join(file_name);
-            std::fs::copy(path, &dest).map_err(|e| format!("cannot copy '{}': {e}", path.display()))?;
+            std::fs::copy(path, &dest)
+                .map_err(|e| format!("cannot copy '{}': {e}", path.display()))?;
             files_written.push(dest);
         }
 
-        let mut summary = format!("exported {} controller profile(s) to '{}'", files_written.len(), ctx.output_dir.display());
+        let mut summary = format!(
+            "exported {} controller profile(s) to '{}'",
+            files_written.len(),
+            ctx.output_dir.display()
+        );
         if !invalid.is_empty() {
             let names: Vec<String> = invalid
                 .iter()
-                .map(|(p, reason)| format!("{} ({reason})", p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()))
+                .map(|(p, reason)| {
+                    format!(
+                        "{} ({reason})",
+                        p.file_name()
+                            .map(|n| n.to_string_lossy().into_owned())
+                            .unwrap_or_default()
+                    )
+                })
                 .collect();
-            summary.push_str(&format!(" — skipped invalid profile(s): {}", names.join(", ")));
+            summary.push_str(&format!(
+                " — skipped invalid profile(s): {}",
+                names.join(", ")
+            ));
         }
 
-        Ok(PluginOutcome { summary, files_written })
+        Ok(PluginOutcome {
+            summary,
+            files_written,
+        })
     }
 }
 
@@ -245,7 +276,10 @@ mod tests {
     use retrotools_core::{DatHeader, DatType, GameSet};
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-controllers-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-plugin-controllers-test-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -275,13 +309,18 @@ mod tests {
     fn validate_rejects_a_profile_missing_required_fields() {
         assert!(validate_autoconfig("input_driver = \"xinput\"\n").is_err());
         assert!(validate_autoconfig("input_device = \"Pad\"\n").is_err());
-        assert!(validate_autoconfig("input_driver = \"xinput\"\ninput_device = \"Pad\"\n").is_err());
+        assert!(
+            validate_autoconfig("input_driver = \"xinput\"\ninput_device = \"Pad\"\n").is_err()
+        );
     }
 
     #[test]
     fn validate_accepts_every_starter_profile() {
         for (name, text) in starter_profiles() {
-            assert!(validate_autoconfig(text).is_ok(), "starter profile '{name}' should be valid");
+            assert!(
+                validate_autoconfig(text).is_ok(),
+                "starter profile '{name}' should be valid"
+            );
         }
     }
 

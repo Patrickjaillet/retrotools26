@@ -63,7 +63,9 @@ pub struct SystemTable {
 
 impl SystemTable {
     pub fn find(&self, platform: &str) -> Option<&SystemMapping> {
-        self.systems.iter().find(|s| s.platform.eq_ignore_ascii_case(platform))
+        self.systems
+            .iter()
+            .find(|s| s.platform.eq_ignore_ascii_case(platform))
     }
 
     /// Folder names to export `platform` into for `distro`. Falls back to a
@@ -110,20 +112,55 @@ pub fn default_system_table() -> SystemTable {
     }
     SystemTable {
         systems: vec![
-            m("Nintendo - Nintendo Entertainment System", &["nes"], &["nes"], &["nes"]),
-            m("Nintendo - Super Nintendo Entertainment System", &["snes"], &["snes"], &["snes"]),
+            m(
+                "Nintendo - Nintendo Entertainment System",
+                &["nes"],
+                &["nes"],
+                &["nes"],
+            ),
+            m(
+                "Nintendo - Super Nintendo Entertainment System",
+                &["snes"],
+                &["snes"],
+                &["snes"],
+            ),
             m("Nintendo - Game Boy", &["gb"], &["gb"], &["gb"]),
             m("Nintendo - Game Boy Color", &["gbc"], &["gbc"], &["gbc"]),
             m("Nintendo - Game Boy Advance", &["gba"], &["gba"], &["gba"]),
             m("Nintendo - Nintendo 64", &["n64"], &["n64"], &["n64"]),
-            m("Sega - Mega Drive - Genesis", &["megadrive"], &["megadrive"], &["genesis"]),
-            m("Sega - Master System - Mark III", &["mastersystem"], &["mastersystem"], &["sms"]),
-            m("Sega - Game Gear", &["gamegear"], &["gamegear"], &["gamegear"]),
+            m(
+                "Sega - Mega Drive - Genesis",
+                &["megadrive"],
+                &["megadrive"],
+                &["genesis"],
+            ),
+            m(
+                "Sega - Master System - Mark III",
+                &["mastersystem"],
+                &["mastersystem"],
+                &["sms"],
+            ),
+            m(
+                "Sega - Game Gear",
+                &["gamegear"],
+                &["gamegear"],
+                &["gamegear"],
+            ),
             m("Sega - Saturn", &["saturn"], &["saturn"], &["saturn"]),
             m("Sony - PlayStation", &["psx"], &["psx"], &["psx"]),
             m("Sony - PlayStation Portable", &["psp"], &["psp"], &["psp"]),
-            m("Atari - 2600", &["atari2600"], &["atari2600"], &["atari2600"]),
-            m("NEC - PC Engine - TurboGrafx 16", &["pcengine"], &["pcengine"], &["pcengine"]),
+            m(
+                "Atari - 2600",
+                &["atari2600"],
+                &["atari2600"],
+                &["atari2600"],
+            ),
+            m(
+                "NEC - PC Engine - TurboGrafx 16",
+                &["pcengine"],
+                &["pcengine"],
+                &["pcengine"],
+            ),
             m("SNK - Neo Geo", &["neogeo"], &["neogeo"], &["neogeo"]),
             m("MAME", &["mame"], &["mame"], &["mame"]),
         ],
@@ -236,19 +273,26 @@ impl Plugin for BatoceraExportPlugin {
     }
 
     fn run(&self, ctx: &PluginContext) -> PluginResult<PluginOutcome> {
-        let source_dir = ctx
-            .source_dir
-            .ok_or_else(|| "this plugin needs a source folder: the already-built 1G1R set to export".to_string())?;
+        let source_dir = ctx.source_dir.ok_or_else(|| {
+            "this plugin needs a source folder: the already-built 1G1R set to export".to_string()
+        })?;
         if !source_dir.is_dir() {
-            return Err(format!("source folder '{}' does not exist", source_dir.display()));
+            return Err(format!(
+                "source folder '{}' does not exist",
+                source_dir.display()
+            ));
         }
 
         let table = load_or_default_table(&table_path());
-        let (folder_names, used_fallback) = table.folder_names_for(&ctx.gameset.platform, self.distro);
+        let (folder_names, used_fallback) =
+            table.folder_names_for(&ctx.gameset.platform, self.distro);
 
         let files = collect_files(source_dir).map_err(|e| e.to_string())?;
         if files.is_empty() {
-            return Err(format!("no files found in source folder '{}'", source_dir.display()));
+            return Err(format!(
+                "no files found in source folder '{}'",
+                source_dir.display()
+            ));
         }
 
         let mut planned = Vec::new();
@@ -279,7 +323,10 @@ impl Plugin for BatoceraExportPlugin {
             if self.distro.uses_es_systems_cfg() {
                 summary.push_str("; would also add/update an es_systems.cfg entry");
             }
-            return Ok(PluginOutcome { summary, files_written: Vec::new() });
+            return Ok(PluginOutcome {
+                summary,
+                files_written: Vec::new(),
+            });
         }
 
         let mut files_written = Vec::new();
@@ -287,7 +334,8 @@ impl Plugin for BatoceraExportPlugin {
             if let Some(parent) = dest.parent() {
                 std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
-            std::fs::copy(source, dest).map_err(|e| format!("cannot copy '{}': {e}", source.display()))?;
+            std::fs::copy(source, dest)
+                .map_err(|e| format!("cannot copy '{}': {e}", source.display()))?;
             files_written.push(dest.clone());
         }
 
@@ -315,7 +363,10 @@ impl Plugin for BatoceraExportPlugin {
             ));
         }
 
-        Ok(PluginOutcome { summary, files_written })
+        Ok(PluginOutcome {
+            summary,
+            files_written,
+        })
     }
 }
 
@@ -325,7 +376,10 @@ mod tests {
     use retrotools_core::{DatHeader, DatType, GameSet};
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-batocera-export-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-batocera-export-test-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -356,7 +410,9 @@ mod tests {
             match_report: None,
             dry_run: false,
         };
-        let plugin = BatoceraExportPlugin { distro: Distro::Recalbox };
+        let plugin = BatoceraExportPlugin {
+            distro: Distro::Recalbox,
+        };
         let outcome = plugin.run(&ctx).unwrap();
         assert!(outcome.summary.contains("snes"));
 
@@ -386,10 +442,16 @@ mod tests {
             match_report: None,
             dry_run: false,
         };
-        let plugin = BatoceraExportPlugin { distro: Distro::Batocera };
+        let plugin = BatoceraExportPlugin {
+            distro: Distro::Batocera,
+        };
         let outcome = plugin.run(&ctx).unwrap();
         assert!(outcome.summary.contains("fallback"));
-        assert!(output.join("roms").join("some-totally-unknown-platform").join("Weird Game.zip").is_file());
+        assert!(output
+            .join("roms")
+            .join("some-totally-unknown-platform")
+            .join("Weird Game.zip")
+            .is_file());
 
         std::fs::remove_dir_all(&source).ok();
         std::fs::remove_dir_all(&output).ok();
@@ -410,11 +472,16 @@ mod tests {
             match_report: None,
             dry_run: true,
         };
-        let plugin = BatoceraExportPlugin { distro: Distro::Recalbox };
+        let plugin = BatoceraExportPlugin {
+            distro: Distro::Recalbox,
+        };
         let outcome = plugin.run(&ctx).unwrap();
         assert!(outcome.summary.starts_with("[dry run]"));
         assert!(outcome.files_written.is_empty());
-        assert!(!output.join("roms").exists(), "dry run must not create the roms/ tree");
+        assert!(
+            !output.join("roms").exists(),
+            "dry run must not create the roms/ tree"
+        );
 
         std::fs::remove_dir_all(&source).ok();
         std::fs::remove_dir_all(&output).ok();
@@ -435,7 +502,9 @@ mod tests {
             match_report: None,
             dry_run: false,
         };
-        let plugin = BatoceraExportPlugin { distro: Distro::Lakka };
+        let plugin = BatoceraExportPlugin {
+            distro: Distro::Lakka,
+        };
         plugin.run(&ctx).unwrap();
         assert!(!output.join("es_systems.cfg").exists());
 
@@ -444,7 +513,8 @@ mod tests {
     }
 
     #[test]
-    fn re_exporting_the_same_platform_is_idempotent_and_a_second_platform_does_not_erase_the_first() {
+    fn re_exporting_the_same_platform_is_idempotent_and_a_second_platform_does_not_erase_the_first()
+    {
         let source_a = temp_dir("merge-source-a");
         std::fs::write(source_a.join("A.zip"), b"a").unwrap();
         let source_b = temp_dir("merge-source-b");
@@ -453,7 +523,9 @@ mod tests {
 
         let gs_snes = gameset("Nintendo - Super Nintendo Entertainment System");
         let gs_nes = gameset("Nintendo - Nintendo Entertainment System");
-        let plugin = BatoceraExportPlugin { distro: Distro::Recalbox };
+        let plugin = BatoceraExportPlugin {
+            distro: Distro::Recalbox,
+        };
 
         let ctx_snes = PluginContext {
             gameset: &gs_snes,
@@ -477,8 +549,16 @@ mod tests {
         plugin.run(&ctx_nes).unwrap();
 
         let cfg = std::fs::read_to_string(output.join("es_systems.cfg")).unwrap();
-        assert_eq!(cfg.matches("<name>snes</name>").count(), 1, "no duplicate snes entry");
-        assert_eq!(cfg.matches("<name>nes</name>").count(), 1, "nes entry present");
+        assert_eq!(
+            cfg.matches("<name>snes</name>").count(),
+            1,
+            "no duplicate snes entry"
+        );
+        assert_eq!(
+            cfg.matches("<name>nes</name>").count(),
+            1,
+            "nes entry present"
+        );
         assert!(output.join("roms").join("snes").join("A.zip").is_file());
         assert!(output.join("roms").join("nes").join("B.zip").is_file());
 
@@ -489,7 +569,10 @@ mod tests {
 
     #[test]
     fn slugify_handles_punctuation_and_repeated_separators() {
-        assert_eq!(slugify("Sega - Mega Drive - Genesis"), "sega-mega-drive-genesis");
+        assert_eq!(
+            slugify("Sega - Mega Drive - Genesis"),
+            "sega-mega-drive-genesis"
+        );
         assert_eq!(slugify("Atari 2600!!"), "atari-2600");
     }
 }

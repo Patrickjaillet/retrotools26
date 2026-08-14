@@ -48,19 +48,27 @@ pub struct ScreenScraperClient {
 
 impl ScreenScraperClient {
     pub fn new() -> Self {
-        Self { base_url: "https://www.screenscraper.fr/api2".to_string() }
+        Self {
+            base_url: "https://www.screenscraper.fr/api2".to_string(),
+        }
     }
 
     #[cfg(test)]
     pub fn with_base_url(base_url: impl Into<String>) -> Self {
-        Self { base_url: base_url.into() }
+        Self {
+            base_url: base_url.into(),
+        }
     }
 
     /// Looks up a game by its CRC32 (already computed by `retrotools-core`
     /// during scanning/DAT parsing — no rehashing here). Returns
     /// `Ok(None)` when ScreenScraper genuinely has no match (HTTP 400/404
     /// from this endpoint means "not found", not an error worth retrying).
-    pub fn fetch_game_media(&self, creds: &Credentials, crc32: &str) -> Result<Option<GameMedia>, String> {
+    pub fn fetch_game_media(
+        &self,
+        creds: &Credentials,
+        crc32: &str,
+    ) -> Result<Option<GameMedia>, String> {
         let url = format!(
             "{}/jeuInfos.php?output=json&devid={}&devpassword={}&softname={}&ssid={}&sspassword={}&crc={}",
             self.base_url,
@@ -79,7 +87,8 @@ impl ScreenScraperClient {
         };
 
         let body = response.into_string().map_err(|e| e.to_string())?;
-        let json: serde_json::Value = serde_json::from_str(&body).map_err(|e| format!("malformed ScreenScraper response: {e}"))?;
+        let json: serde_json::Value = serde_json::from_str(&body)
+            .map_err(|e| format!("malformed ScreenScraper response: {e}"))?;
         Ok(Some(parse_game_media(&json)))
     }
 }
@@ -100,16 +109,25 @@ fn parse_game_media(json: &serde_json::Value) -> GameMedia {
         .or_else(|| jeu["nom"].as_str())
         .map(|s| s.to_string());
 
-    let mut media = GameMedia { name, ..Default::default() };
+    let mut media = GameMedia {
+        name,
+        ..Default::default()
+    };
     if let Some(entries) = jeu["medias"].as_array() {
         for entry in entries {
-            let Some(kind) = entry["type"].as_str() else { continue };
-            let Some(url) = entry["url"].as_str() else { continue };
+            let Some(kind) = entry["type"].as_str() else {
+                continue;
+            };
+            let Some(url) = entry["url"].as_str() else {
+                continue;
+            };
             match kind {
                 "box-2D" | "box2d" | "box-3D" if media.box_art_url.is_none() => {
                     media.box_art_url = Some(url.to_string())
                 }
-                "ss" | "screenshot" if media.screenshot_url.is_none() => media.screenshot_url = Some(url.to_string()),
+                "ss" | "screenshot" if media.screenshot_url.is_none() => {
+                    media.screenshot_url = Some(url.to_string())
+                }
                 "video" if media.video_url.is_none() => media.video_url = Some(url.to_string()),
                 "wheel" if media.wheel_url.is_none() => media.wheel_url = Some(url.to_string()),
                 _ => {}
@@ -144,7 +162,9 @@ fn urlencode(value: &str) -> String {
     let mut out = String::new();
     for byte in value.bytes() {
         match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(byte as char),
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(byte as char)
+            }
             _ => out.push_str(&format!("%{byte:02X}")),
         }
     }
@@ -201,12 +221,27 @@ mod tests {
         }"#;
         let base_url = serve_once("200 OK", body);
         let client = ScreenScraperClient::with_base_url(base_url);
-        let media = client.fetch_game_media(&creds(), "12345678").unwrap().unwrap();
+        let media = client
+            .fetch_game_media(&creds(), "12345678")
+            .unwrap()
+            .unwrap();
         assert_eq!(media.name.as_deref(), Some("Super Test Game"));
-        assert_eq!(media.box_art_url.as_deref(), Some("https://example.com/box.png"));
-        assert_eq!(media.screenshot_url.as_deref(), Some("https://example.com/screenshot.png"));
-        assert_eq!(media.video_url.as_deref(), Some("https://example.com/video.mp4"));
-        assert_eq!(media.wheel_url.as_deref(), Some("https://example.com/wheel.png"));
+        assert_eq!(
+            media.box_art_url.as_deref(),
+            Some("https://example.com/box.png")
+        );
+        assert_eq!(
+            media.screenshot_url.as_deref(),
+            Some("https://example.com/screenshot.png")
+        );
+        assert_eq!(
+            media.video_url.as_deref(),
+            Some("https://example.com/video.mp4")
+        );
+        assert_eq!(
+            media.wheel_url.as_deref(),
+            Some("https://example.com/wheel.png")
+        );
     }
 
     #[test]
@@ -223,7 +258,10 @@ mod tests {
         }"#;
         let base_url = serve_once("200 OK", body);
         let client = ScreenScraperClient::with_base_url(base_url);
-        let media = client.fetch_game_media(&creds(), "12345678").unwrap().unwrap();
+        let media = client
+            .fetch_game_media(&creds(), "12345678")
+            .unwrap()
+            .unwrap();
         assert_eq!(media.genre.as_deref(), Some("Platform"));
         assert_eq!(media.release_year.as_deref(), Some("1991"));
     }
@@ -232,7 +270,10 @@ mod tests {
     fn a_404_means_no_match_not_an_error() {
         let base_url = serve_once("404 Not Found", "{}");
         let client = ScreenScraperClient::with_base_url(base_url);
-        assert!(client.fetch_game_media(&creds(), "deadbeef").unwrap().is_none());
+        assert!(client
+            .fetch_game_media(&creds(), "deadbeef")
+            .unwrap()
+            .is_none());
     }
 
     #[test]
@@ -240,7 +281,10 @@ mod tests {
         let body = r#"{"response": {"jeu": {"noms": [{"region": "wor", "text": "No Media Game"}], "medias": []}}}"#;
         let base_url = serve_once("200 OK", body);
         let client = ScreenScraperClient::with_base_url(base_url);
-        let media = client.fetch_game_media(&creds(), "00000000").unwrap().unwrap();
+        let media = client
+            .fetch_game_media(&creds(), "00000000")
+            .unwrap()
+            .unwrap();
         assert_eq!(media.name.as_deref(), Some("No Media Game"));
         assert!(media.media_urls().is_empty());
     }

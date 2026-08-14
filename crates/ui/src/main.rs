@@ -15,7 +15,10 @@ fn main() -> eframe::Result<()> {
     let config = AppConfig::load().unwrap_or_default();
     let _log_guard = retrotools_common::logging::init_logging(&config.log_level);
 
-    tracing::info!("starting Retro Tools 2026 {}", retrotools_common::current_version());
+    tracing::info!(
+        "starting Retro Tools 2026 {}",
+        retrotools_common::current_version()
+    );
 
     // Raw 256x256 RGBA (no PNG container) generated alongside `assets/icon.ico`
     // (which is what actually shows up in Explorer/the taskbar, embedded into
@@ -72,7 +75,8 @@ mod ui_smoke_tests {
         let mut f = Some(f);
         let _output = ctx.run(frame_input(), |ctx| {
             egui::CentralPanel::default().show(ctx, |ui| {
-                (f.take().expect("run_frame's closure is called exactly once"))(ui);
+                (f.take()
+                    .expect("run_frame's closure is called exactly once"))(ui);
             });
         });
     }
@@ -108,11 +112,15 @@ mod ui_smoke_tests {
 <game name="Smoke Game (Europe)"><rom name="Smoke Game (Europe).bin" size="1" crc="00000001"/></game>
 <game name="Smoke Game (USA)"><rom name="Smoke Game (USA).bin" size="1" crc="00000002"/></game>
 </datafile>"#;
-        let dat_path = std::env::temp_dir().join(format!("rt26-ui-smoke-{}.dat", std::process::id()));
+        let dat_path =
+            std::env::temp_dir().join(format!("rt26-ui-smoke-{}.dat", std::process::id()));
         std::fs::write(&dat_path, dat).unwrap();
         state.import_dat(dat_path.clone());
         std::fs::remove_file(&dat_path).ok();
-        assert!(state.selected_platform.is_some(), "import_dat should select the imported platform");
+        assert!(
+            state.selected_platform.is_some(),
+            "import_dat should select the imported platform"
+        );
 
         for _ in 0..2 {
             run_frame(&ctx, |ui| views::platforms::show(ui, &mut state));

@@ -121,18 +121,27 @@ mod tests {
 
     #[test]
     fn sanitizes_unsafe_filename_characters() {
-        assert_eq!(sanitize_component("No-Intro: Game Boy?"), "No-Intro_ Game Boy_");
+        assert_eq!(
+            sanitize_component("No-Intro: Game Boy?"),
+            "No-Intro_ Game Boy_"
+        );
     }
 
     #[test]
     fn guesses_zip_from_magic_bytes_over_url() {
         let zip_magic = [0x50, 0x4B, 0x03, 0x04];
-        assert_eq!(guess_extension("https://example.com/dat.download", &zip_magic), "zip");
+        assert_eq!(
+            guess_extension("https://example.com/dat.download", &zip_magic),
+            "zip"
+        );
     }
 
     #[test]
     fn guesses_zip_from_url_extension_when_content_is_ambiguous() {
-        assert_eq!(guess_extension("https://example.com/pack.zip", b"<?xml"), "zip");
+        assert_eq!(
+            guess_extension("https://example.com/pack.zip", b"<?xml"),
+            "zip"
+        );
     }
 
     #[test]

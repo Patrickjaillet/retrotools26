@@ -13,16 +13,26 @@ pub fn download_if_missing(url: &str, dest: &Path) -> Result<bool, String> {
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    let response = ureq::get(url).timeout(Duration::from_secs(30)).call().map_err(|e| e.to_string())?;
+    let response = ureq::get(url)
+        .timeout(Duration::from_secs(30))
+        .call()
+        .map_err(|e| e.to_string())?;
     let mut bytes = Vec::new();
-    response.into_reader().read_to_end(&mut bytes).map_err(|e| e.to_string())?;
+    response
+        .into_reader()
+        .read_to_end(&mut bytes)
+        .map_err(|e| e.to_string())?;
     std::fs::write(dest, &bytes).map_err(|e| e.to_string())?;
     Ok(true)
 }
 
 /// Total size in bytes of every file under `dir`.
 pub fn cache_size(dir: &Path) -> u64 {
-    walk_files(dir).iter().filter_map(|p| p.metadata().ok()).map(|m| m.len()).sum()
+    walk_files(dir)
+        .iter()
+        .filter_map(|p| p.metadata().ok())
+        .map(|m| m.len())
+        .sum()
 }
 
 /// Deletes the oldest (by modification time) files under `dir` until its
@@ -61,7 +71,9 @@ fn walk_files(root: &Path) -> Vec<PathBuf> {
     }
     let mut stack = vec![root.to_path_buf()];
     while let Some(dir) = stack.pop() {
-        let Ok(entries) = std::fs::read_dir(&dir) else { continue };
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
@@ -81,7 +93,10 @@ mod tests {
     use std::net::TcpListener;
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-scraper-cache-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-scraper-cache-test-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -108,7 +123,10 @@ mod tests {
 
         assert!(download_if_missing(&url, &dest).unwrap());
         assert_eq!(std::fs::read(&dest).unwrap(), b"fake-image-bytes");
-        assert!(!download_if_missing(&url, &dest).unwrap(), "second call must not re-download");
+        assert!(
+            !download_if_missing(&url, &dest).unwrap(),
+            "second call must not re-download"
+        );
 
         std::fs::remove_dir_all(&dir).ok();
     }

@@ -15,7 +15,10 @@ fn matches_filter(state: &AppState, game: &Game) -> bool {
     let filter = &state.games_filter;
 
     if !filter.search.is_empty()
-        && !game.name.to_lowercase().contains(&filter.search.to_lowercase())
+        && !game
+            .name
+            .to_lowercase()
+            .contains(&filter.search.to_lowercase())
     {
         return false;
     }
@@ -84,20 +87,40 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
 
         ui.separator();
         egui::ComboBox::from_id_source("region_filter")
-            .selected_text(state.games_filter.region.clone().unwrap_or_else(|| "Any region".into()))
+            .selected_text(
+                state
+                    .games_filter
+                    .region
+                    .clone()
+                    .unwrap_or_else(|| "Any region".into()),
+            )
             .show_ui(ui, |ui| {
                 ui.selectable_value(&mut state.games_filter.region, None, "Any region");
                 for region in &all_regions {
-                    ui.selectable_value(&mut state.games_filter.region, Some(region.clone()), region);
+                    ui.selectable_value(
+                        &mut state.games_filter.region,
+                        Some(region.clone()),
+                        region,
+                    );
                 }
             });
 
         egui::ComboBox::from_id_source("language_filter")
-            .selected_text(state.games_filter.language.clone().unwrap_or_else(|| "Any language".into()))
+            .selected_text(
+                state
+                    .games_filter
+                    .language
+                    .clone()
+                    .unwrap_or_else(|| "Any language".into()),
+            )
             .show_ui(ui, |ui| {
                 ui.selectable_value(&mut state.games_filter.language, None, "Any language");
                 for language in &all_languages {
-                    ui.selectable_value(&mut state.games_filter.language, Some(language.clone()), language);
+                    ui.selectable_value(
+                        &mut state.games_filter.language,
+                        Some(language.clone()),
+                        language,
+                    );
                 }
             });
 
@@ -105,10 +128,26 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
             .selected_text(format!("{:?}", state.games_filter.status))
             .show_ui(ui, |ui| {
                 ui.selectable_value(&mut state.games_filter.status, StatusFilter::All, "All");
-                ui.selectable_value(&mut state.games_filter.status, StatusFilter::Matched, "Matched");
-                ui.selectable_value(&mut state.games_filter.status, StatusFilter::Corrupt, "Corrupt");
-                ui.selectable_value(&mut state.games_filter.status, StatusFilter::Unknown, "Not scanned");
-                ui.selectable_value(&mut state.games_filter.status, StatusFilter::Missing, "Missing");
+                ui.selectable_value(
+                    &mut state.games_filter.status,
+                    StatusFilter::Matched,
+                    "Matched",
+                );
+                ui.selectable_value(
+                    &mut state.games_filter.status,
+                    StatusFilter::Corrupt,
+                    "Corrupt",
+                );
+                ui.selectable_value(
+                    &mut state.games_filter.status,
+                    StatusFilter::Unknown,
+                    "Not scanned",
+                );
+                ui.selectable_value(
+                    &mut state.games_filter.status,
+                    StatusFilter::Missing,
+                    "Missing",
+                );
             });
     });
 
@@ -123,7 +162,14 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
         ] {
             let selected = state.games_filter.sort == column;
             let text = if selected {
-                format!("{label} {}", if state.games_filter.sort_ascending { "^" } else { "v" })
+                format!(
+                    "{label} {}",
+                    if state.games_filter.sort_ascending {
+                        "^"
+                    } else {
+                        "v"
+                    }
+                )
             } else {
                 label.to_string()
             };
@@ -139,10 +185,16 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
 
         ui.separator();
         ui.label(RichText::new("View:").weak());
-        if ui.selectable_label(state.games_filter.view_mode == GamesViewMode::List, "List").clicked() {
+        if ui
+            .selectable_label(state.games_filter.view_mode == GamesViewMode::List, "List")
+            .clicked()
+        {
             state.games_filter.view_mode = GamesViewMode::List;
         }
-        if ui.selectable_label(state.games_filter.view_mode == GamesViewMode::Grid, "Grid").clicked() {
+        if ui
+            .selectable_label(state.games_filter.view_mode == GamesViewMode::Grid, "Grid")
+            .clicked()
+        {
             state.games_filter.view_mode = GamesViewMode::Grid;
         }
     });
@@ -150,7 +202,11 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
     ui.add_space(8.0);
     ui.separator();
 
-    let mut filtered: Vec<&Game> = gameset.games.iter().filter(|g| matches_filter(state, g)).collect();
+    let mut filtered: Vec<&Game> = gameset
+        .games
+        .iter()
+        .filter(|g| matches_filter(state, g))
+        .collect();
     match state.games_filter.sort {
         SortColumn::Name => filtered.sort_by(|a, b| a.name.cmp(&b.name)),
         SortColumn::Region => filtered.sort_by(|a, b| {
@@ -173,14 +229,18 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
     ui.add_space(6.0);
 
     ui.columns(2, |columns| {
-        ScrollArea::vertical().id_source("games_list").show(&mut columns[0], |ui| match state.games_filter.view_mode {
-            GamesViewMode::List => show_list(ui, state, &filtered),
-            GamesViewMode::Grid => show_grid(ui, state, &filtered),
-        });
+        ScrollArea::vertical()
+            .id_source("games_list")
+            .show(&mut columns[0], |ui| match state.games_filter.view_mode {
+                GamesViewMode::List => show_list(ui, state, &filtered),
+                GamesViewMode::Grid => show_grid(ui, state, &filtered),
+            });
 
-        ScrollArea::vertical().id_source("game_details").show(&mut columns[1], |ui| {
-            show_details(ui, state, &gameset, &filtered);
-        });
+        ScrollArea::vertical()
+            .id_source("game_details")
+            .show(&mut columns[1], |ui| {
+                show_details(ui, state, &gameset, &filtered);
+            });
     });
 }
 
@@ -249,7 +309,11 @@ fn show_grid(ui: &mut Ui, state: &mut AppState, filtered: &[&Game]) {
                         ui.label(RichText::new(&region.0).weak().small());
                     }
                     if let Some(true) = state.is_kept(&game.name) {
-                        ui.label(RichText::new("KEPT").small().color(Color32::from_rgb(76, 175, 80)));
+                        ui.label(
+                            RichText::new("KEPT")
+                                .small()
+                                .color(Color32::from_rgb(76, 175, 80)),
+                        );
                     }
                 });
             });
@@ -261,7 +325,12 @@ fn show_grid(ui: &mut Ui, state: &mut AppState, filtered: &[&Game]) {
     });
 }
 
-fn show_details(ui: &mut Ui, state: &AppState, gameset: &retrotools_core::GameSet, filtered: &[&Game]) {
+fn show_details(
+    ui: &mut Ui,
+    state: &AppState,
+    gameset: &retrotools_core::GameSet,
+    filtered: &[&Game],
+) {
     let Some(selected_name) = &state.selected_game else {
         ui.label(RichText::new("Select a game to see its details.").weak());
         return;
@@ -300,7 +369,11 @@ fn show_details(ui: &mut Ui, state: &AppState, gameset: &retrotools_core::GameSe
             ui.label(if game.regions.is_empty() {
                 "-".to_string()
             } else {
-                game.regions.iter().map(|r| r.0.clone()).collect::<Vec<_>>().join(", ")
+                game.regions
+                    .iter()
+                    .map(|r| r.0.clone())
+                    .collect::<Vec<_>>()
+                    .join(", ")
             });
             ui.end_row();
 
@@ -308,7 +381,11 @@ fn show_details(ui: &mut Ui, state: &AppState, gameset: &retrotools_core::GameSe
             ui.label(if game.languages.is_empty() {
                 "-".to_string()
             } else {
-                game.languages.iter().map(|l| l.0.clone()).collect::<Vec<_>>().join(", ")
+                game.languages
+                    .iter()
+                    .map(|l| l.0.clone())
+                    .collect::<Vec<_>>()
+                    .join(", ")
             });
             ui.end_row();
 
@@ -320,10 +397,21 @@ fn show_details(ui: &mut Ui, state: &AppState, gameset: &retrotools_core::GameSe
             ui.label(tags_summary(game));
             ui.end_row();
 
-            if let Some(rec) = retrotools_plugin_core_advisor::find_recommendation(&state.core_advisor_db, &gameset.platform, &game.name) {
+            if let Some(rec) = retrotools_plugin_core_advisor::find_recommendation(
+                &state.core_advisor_db,
+                &gameset.platform,
+                &game.name,
+            ) {
                 ui.label(RichText::new("Recommended core").weak());
-                let flag = if rec.known_problematic { " ⚠ known problematic" } else { "" };
-                ui.label(format!("{} ({} confidence){flag}", rec.core, rec.confidence));
+                let flag = if rec.known_problematic {
+                    " ⚠ known problematic"
+                } else {
+                    ""
+                };
+                ui.label(format!(
+                    "{} ({} confidence){flag}",
+                    rec.core, rec.confidence
+                ));
                 ui.end_row();
                 if !rec.note.is_empty() {
                     ui.label(RichText::new("Core note").weak());
@@ -333,10 +421,17 @@ fn show_details(ui: &mut Ui, state: &AppState, gameset: &retrotools_core::GameSe
             }
 
             if state.config.retroachievements.is_configured() {
-                let hashes = retrotools_plugin_retroachievements::load_cached_hashes_for_platform(&gameset.platform);
+                let hashes = retrotools_plugin_retroachievements::load_cached_hashes_for_platform(
+                    &gameset.platform,
+                );
                 let status = if hashes.is_empty() {
                     "Not synced yet"
-                } else if game.roms.iter().any(|r| r.md5.as_deref().map(|md5| hashes.contains(&md5.to_lowercase())).unwrap_or(false)) {
+                } else if game.roms.iter().any(|r| {
+                    r.md5
+                        .as_deref()
+                        .map(|md5| hashes.contains(&md5.to_lowercase()))
+                        .unwrap_or(false)
+                }) {
                     "Compatible (known hash)"
                 } else {
                     "No known hash"

@@ -2,8 +2,8 @@ use crate::header::{detect_header, HeaderInfo, RomHeaderKind};
 use md5::Md5;
 use retrotools_common::error::{AppError, AppResult};
 use sha1::Sha1;
-use sha2::Sha256;
 use sha2::Digest;
+use sha2::Sha256;
 use std::io::Read;
 
 const CHUNK_SIZE: usize = 64 * 1024;

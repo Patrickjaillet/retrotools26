@@ -19,6 +19,10 @@ pub fn current() -> VersionInfo {
 
 impl std::fmt::Display for VersionInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "v{} ({}, {})", self.version, self.git_hash, self.build_date)
+        write!(
+            f,
+            "v{} ({}, {})",
+            self.version, self.git_hash, self.build_date
+        )
     }
 }

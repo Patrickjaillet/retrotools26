@@ -130,10 +130,18 @@ impl RetroToolsApp {
                     }
                 }
                 ui.separator();
-                if ui.button(self.state.t(Key::ImportDatButton)).on_hover_text("Ctrl+O").clicked() {
+                if ui
+                    .button(self.state.t(Key::ImportDatButton))
+                    .on_hover_text("Ctrl+O")
+                    .clicked()
+                {
                     self.import_dat_dialog();
                 }
-                if ui.button("\u{1F50D}").on_hover_text("Command palette (Ctrl+Shift+P)").clicked() {
+                if ui
+                    .button("\u{1F50D}")
+                    .on_hover_text("Command palette (Ctrl+Shift+P)")
+                    .clicked()
+                {
                     self.state.command_palette_open = true;
                 }
             });
@@ -189,7 +197,9 @@ impl RetroToolsApp {
             self.state.command_palette_query.clear();
             self.state.command_palette_selected = 0;
         }
-        if self.state.command_palette_open && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape)) {
+        if self.state.command_palette_open
+            && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
+        {
             self.state.command_palette_open = false;
         }
 
@@ -239,7 +249,8 @@ impl RetroToolsApp {
             .filter(|c| query.is_empty() || c.label(lang).to_lowercase().contains(&query))
             .collect();
         if !matches.is_empty() {
-            self.state.command_palette_selected = self.state.command_palette_selected.min(matches.len() - 1);
+            self.state.command_palette_selected =
+                self.state.command_palette_selected.min(matches.len() - 1);
         }
 
         let mut still_open = true;
@@ -352,7 +363,8 @@ impl eframe::App for RetroToolsApp {
 
         if self.state.scan_in_progress || self.state.build_in_progress {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
-        } else if self.state.watch_folder_enabled || self.state.auto_rescan_interval_secs.is_some() {
+        } else if self.state.watch_folder_enabled || self.state.auto_rescan_interval_secs.is_some()
+        {
             ctx.request_repaint_after(std::time::Duration::from_secs(2));
         }
     }

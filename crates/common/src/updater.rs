@@ -44,7 +44,10 @@ impl GitHubReleaseSource {
 
 impl UpdateSource for GitHubReleaseSource {
     fn check_latest(&self) -> AppResult<Option<ReleaseInfo>> {
-        let url = format!("{}/repos/{}/releases/latest", self.api_base_url, self.repository);
+        let url = format!(
+            "{}/repos/{}/releases/latest",
+            self.api_base_url, self.repository
+        );
         let response = match ureq::get(&url)
             .set("User-Agent", "retrotools2026-updater")
             .set("Accept", "application/vnd.github+json")
@@ -54,14 +57,19 @@ impl UpdateSource for GitHubReleaseSource {
             // A brand new repository with no releases yet is a legitimate
             // state, not a failure worth surfacing as an error toast.
             Err(ureq::Error::Status(404, _)) => return Ok(None),
-            Err(err) => return Err(AppError::Update(format!("cannot reach GitHub releases API: {err}"))),
+            Err(err) => {
+                return Err(AppError::Update(format!(
+                    "cannot reach GitHub releases API: {err}"
+                )))
+            }
         };
 
-        let body = response
-            .into_string()
-            .map_err(|err| AppError::Update(format!("cannot read GitHub releases response: {err}")))?;
-        let json: serde_json::Value = serde_json::from_str(&body)
-            .map_err(|err| AppError::Update(format!("malformed GitHub releases response: {err}")))?;
+        let body = response.into_string().map_err(|err| {
+            AppError::Update(format!("cannot read GitHub releases response: {err}"))
+        })?;
+        let json: serde_json::Value = serde_json::from_str(&body).map_err(|err| {
+            AppError::Update(format!("malformed GitHub releases response: {err}"))
+        })?;
 
         let version = json
             .get("tag_name")
@@ -77,7 +85,11 @@ impl UpdateSource for GitHubReleaseSource {
             .map(|dt| dt.with_timezone(&chrono::Utc))
             .unwrap_or_else(chrono::Utc::now);
 
-        let release_notes = json.get("body").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        let release_notes = json
+            .get("body")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
 
         // Prefer a real installer/portable-zip asset over the generic
         // "view this release on GitHub" page, but fall back to the page if
@@ -175,9 +187,15 @@ mod tests {
             repository: "example/repo".to_string(),
             api_base_url: base_url,
         };
-        let release = source.check_latest().unwrap().expect("a release was returned");
+        let release = source
+            .check_latest()
+            .unwrap()
+            .expect("a release was returned");
         assert_eq!(release.version, "1.4.0");
-        assert_eq!(release.download_url, "https://github.com/example/repo/releases/download/v1.4.0/retrotools2026-setup.exe");
+        assert_eq!(
+            release.download_url,
+            "https://github.com/example/repo/releases/download/v1.4.0/retrotools2026-setup.exe"
+        );
         assert_eq!(release.release_notes, "Release notes go here.");
     }
 
@@ -197,7 +215,10 @@ mod tests {
             api_base_url: base_url,
         };
         let release = source.check_latest().unwrap().unwrap();
-        assert_eq!(release.download_url, "https://github.com/example/repo/releases/tag/v1.4.0");
+        assert_eq!(
+            release.download_url,
+            "https://github.com/example/repo/releases/tag/v1.4.0"
+        );
     }
 
     #[test]

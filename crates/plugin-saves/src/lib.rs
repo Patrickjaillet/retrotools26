@@ -11,7 +11,10 @@ use std::path::{Path, PathBuf};
 pub fn default_saves_dir_candidates(mount_root: &Path) -> Vec<(&'static str, PathBuf)> {
     vec![
         ("Batocera", mount_root.join("userdata").join("saves")),
-        ("Recalbox", mount_root.join("recalbox").join("share").join("saves")),
+        (
+            "Recalbox",
+            mount_root.join("recalbox").join("share").join("saves"),
+        ),
         ("Lakka", mount_root.join("storage").join("saves")),
     ]
 }
@@ -63,11 +66,14 @@ impl Plugin for SavesBackupPlugin {
     }
 
     fn run(&self, ctx: &PluginContext) -> PluginResult<PluginOutcome> {
-        let source_dir = ctx
-            .source_dir
-            .ok_or_else(|| "this plugin needs a source folder: the saves/states folder to back up".to_string())?;
+        let source_dir = ctx.source_dir.ok_or_else(|| {
+            "this plugin needs a source folder: the saves/states folder to back up".to_string()
+        })?;
         if !source_dir.is_dir() {
-            return Err(format!("source folder '{}' does not exist", source_dir.display()));
+            return Err(format!(
+                "source folder '{}' does not exist",
+                source_dir.display()
+            ));
         }
 
         let files = collect_files(source_dir).map_err(|e| e.to_string())?;
@@ -79,7 +85,11 @@ impl Plugin for SavesBackupPlugin {
         let archive_path = ctx.output_dir.join(&archive_name);
 
         if ctx.dry_run {
-            let total_bytes: u64 = files.iter().filter_map(|f| f.metadata().ok()).map(|m| m.len()).sum();
+            let total_bytes: u64 = files
+                .iter()
+                .filter_map(|f| f.metadata().ok())
+                .map(|m| m.len())
+                .sum();
             return Ok(PluginOutcome {
                 summary: format!(
                     "[dry run] would back up {} file(s) ({} bytes) into '{}'",
@@ -104,7 +114,8 @@ impl Plugin for SavesBackupPlugin {
             let mut options = zip::write::FileOptions::default();
             if let Some(duration) = mtime {
                 use chrono::{Datelike, Timelike};
-                let datetime = chrono::DateTime::<chrono::Utc>::from(std::time::UNIX_EPOCH + duration);
+                let datetime =
+                    chrono::DateTime::<chrono::Utc>::from(std::time::UNIX_EPOCH + duration);
                 if let Ok(zip_time) = zip::DateTime::from_date_and_time(
                     datetime.year().clamp(1980, 2107) as u16,
                     datetime.month() as u8,
@@ -125,7 +136,11 @@ impl Plugin for SavesBackupPlugin {
         writer.finish().map_err(|e| e.to_string())?;
 
         Ok(PluginOutcome {
-            summary: format!("backed up {} file(s) into '{}'", files.len(), archive_path.display()),
+            summary: format!(
+                "backed up {} file(s) into '{}'",
+                files.len(),
+                archive_path.display()
+            ),
             files_written: vec![archive_path],
         })
     }
@@ -148,14 +163,18 @@ impl Plugin for SavesRestorePlugin {
     }
 
     fn run(&self, ctx: &PluginContext) -> PluginResult<PluginOutcome> {
-        let source_zip = ctx
-            .source_dir
-            .ok_or_else(|| "this plugin needs a source: the backup .zip file created by Save Backup".to_string())?;
+        let source_zip = ctx.source_dir.ok_or_else(|| {
+            "this plugin needs a source: the backup .zip file created by Save Backup".to_string()
+        })?;
         if source_zip.extension().and_then(|e| e.to_str()) != Some("zip") {
-            return Err(format!("'{}' is not a .zip backup archive", source_zip.display()));
+            return Err(format!(
+                "'{}' is not a .zip backup archive",
+                source_zip.display()
+            ));
         }
         let file = std::fs::File::open(source_zip).map_err(|e| e.to_string())?;
-        let mut archive = zip::ZipArchive::new(file).map_err(|e| format!("cannot read backup archive: {e}"))?;
+        let mut archive =
+            zip::ZipArchive::new(file).map_err(|e| format!("cannot read backup archive: {e}"))?;
 
         let mut planned = Vec::new();
         for i in 0..archive.len() {
@@ -168,7 +187,10 @@ impl Plugin for SavesRestorePlugin {
             planned.push((entry.name().to_string(), dest, conflict));
         }
         if planned.is_empty() {
-            return Err(format!("backup archive '{}' contains no files", source_zip.display()));
+            return Err(format!(
+                "backup archive '{}' contains no files",
+                source_zip.display()
+            ));
         }
 
         if ctx.dry_run {
@@ -201,7 +223,8 @@ impl Plugin for SavesRestorePlugin {
                     (Some(log), Some(id)) => Some((log, id.as_str())),
                     _ => None,
                 };
-                retrotools_core::fileops::safe_delete(dest, &trash_root, undo_ref).map_err(|e| e.to_string())?;
+                retrotools_core::fileops::safe_delete(dest, &trash_root, undo_ref)
+                    .map_err(|e| e.to_string())?;
                 conflicts_moved += 1;
             }
             if let Some(parent) = dest.parent() {
@@ -226,7 +249,10 @@ impl Plugin for SavesRestorePlugin {
             ));
         }
 
-        Ok(PluginOutcome { summary, files_written })
+        Ok(PluginOutcome {
+            summary,
+            files_written,
+        })
     }
 }
 
@@ -236,7 +262,10 @@ mod tests {
     use retrotools_core::{DatHeader, DatType, GameSet};
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rt26-plugin-saves-test-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "rt26-plugin-saves-test-{name}-{}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -300,7 +329,9 @@ mod tests {
         let outcome = SavesBackupPlugin.run(&ctx).unwrap();
         assert!(outcome.summary.starts_with("[dry run]"));
         assert!(outcome.files_written.is_empty());
-        assert!(std::fs::read_dir(&output).map(|mut d| d.next().is_none()).unwrap_or(true));
+        assert!(std::fs::read_dir(&output)
+            .map(|mut d| d.next().is_none())
+            .unwrap_or(true));
 
         std::fs::remove_dir_all(&source).ok();
     }
@@ -373,7 +404,10 @@ mod tests {
         };
         let outcome = SavesRestorePlugin.run(&restore_ctx).unwrap();
         assert!(outcome.summary.contains("1 would overwrite"));
-        assert_eq!(std::fs::read_to_string(saves_dir.join("game.srm")).unwrap(), "modified-save");
+        assert_eq!(
+            std::fs::read_to_string(saves_dir.join("game.srm")).unwrap(),
+            "modified-save"
+        );
 
         std::fs::remove_dir_all(&saves_dir).ok();
         std::fs::remove_dir_all(&backup_dir).ok();
@@ -384,7 +418,11 @@ mod tests {
         let mount = PathBuf::from("E:/");
         let candidates = default_saves_dir_candidates(&mount);
         assert_eq!(candidates.len(), 3);
-        assert!(candidates.iter().any(|(name, path)| *name == "Batocera" && path.ends_with("userdata/saves")));
-        assert!(candidates.iter().any(|(name, path)| *name == "Recalbox" && path.ends_with("recalbox/share/saves")));
+        assert!(candidates
+            .iter()
+            .any(|(name, path)| *name == "Batocera" && path.ends_with("userdata/saves")));
+        assert!(candidates
+            .iter()
+            .any(|(name, path)| *name == "Recalbox" && path.ends_with("recalbox/share/saves")));
     }
 }

@@ -15,13 +15,19 @@ pub struct GamelistEntry {
 }
 
 fn xml_escape(text: &str) -> String {
-    text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
 }
 
 fn entry_fragment(entry: &GamelistEntry) -> String {
     let mut fragment = String::new();
     fragment.push_str("  <game>\n");
-    fragment.push_str(&format!("    <path>{}</path>\n", xml_escape(&entry.rom_path)));
+    fragment.push_str(&format!(
+        "    <path>{}</path>\n",
+        xml_escape(&entry.rom_path)
+    ));
     fragment.push_str(&format!("    <name>{}</name>\n", xml_escape(&entry.name)));
     if let Some(image) = &entry.image {
         fragment.push_str(&format!("    <image>{}</image>\n", xml_escape(image)));
@@ -36,7 +42,10 @@ fn entry_fragment(entry: &GamelistEntry) -> String {
         fragment.push_str(&format!("    <genre>{}</genre>\n", xml_escape(genre)));
     }
     if let Some(year) = &entry.release_year {
-        fragment.push_str(&format!("    <releasedate>{}</releasedate>\n", xml_escape(year)));
+        fragment.push_str(&format!(
+            "    <releasedate>{}</releasedate>\n",
+            xml_escape(year)
+        ));
     }
     fragment.push_str("  </game>\n");
     fragment

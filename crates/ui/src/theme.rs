@@ -15,11 +15,12 @@ pub fn apply_theme(ctx: &egui::Context, preference: ThemePreference, accent: [u8
     };
 
     let accent_color = Color32::from_rgb(accent[0], accent[1], accent[2]);
-    let selection_text_color = if accent_color.r() as u32 + accent_color.g() as u32 + accent_color.b() as u32 > 384 {
-        Color32::BLACK
-    } else {
-        Color32::WHITE
-    };
+    let selection_text_color =
+        if accent_color.r() as u32 + accent_color.g() as u32 + accent_color.b() as u32 > 384 {
+            Color32::BLACK
+        } else {
+            Color32::WHITE
+        };
     visuals.selection.bg_fill = accent_color;
     visuals.selection.stroke = Stroke::new(1.0_f32, selection_text_color);
     visuals.widgets.hovered.bg_stroke = Stroke::new(1.0_f32, accent_color);

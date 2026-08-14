@@ -30,7 +30,9 @@ pub fn detect_archive_kind(path: &Path) -> AppResult<ArchiveKind> {
     let n = file.read(&mut magic).map_err(AppError::Io)?;
     let magic = &magic[..n];
 
-    if magic.len() >= 4 && (magic[0..4] == [0x50, 0x4B, 0x03, 0x04] || magic[0..4] == [0x50, 0x4B, 0x05, 0x06]) {
+    if magic.len() >= 4
+        && (magic[0..4] == [0x50, 0x4B, 0x03, 0x04] || magic[0..4] == [0x50, 0x4B, 0x05, 0x06])
+    {
         return Ok(ArchiveKind::Zip);
     }
     if magic.len() >= 6 && magic[0..6] == [0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C] {
@@ -60,7 +62,11 @@ pub fn detect_archive_kind(path: &Path) -> AppResult<ArchiveKind> {
 pub fn is_supported_archive(kind: ArchiveKind) -> bool {
     matches!(
         kind,
-        ArchiveKind::Zip | ArchiveKind::SevenZip | ArchiveKind::Tar | ArchiveKind::Rar | ArchiveKind::Chd
+        ArchiveKind::Zip
+            | ArchiveKind::SevenZip
+            | ArchiveKind::Tar
+            | ArchiveKind::Rar
+            | ArchiveKind::Chd
     )
 }
 
@@ -200,7 +206,10 @@ fn chd_entry_name(path: &Path) -> String {
 fn chd_list_entries(path: &Path) -> AppResult<Vec<ArchiveEntry>> {
     let extracted = chd_extract_to_temp(path)?;
     let size = std::fs::metadata(&extracted).map(|m| m.len()).unwrap_or(0);
-    let name = extracted.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let name = extracted
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_default();
     if let Some(parent) = extracted.parent() {
         std::fs::remove_dir_all(parent).ok();
     }
@@ -209,7 +218,9 @@ fn chd_list_entries(path: &Path) -> AppResult<Vec<ArchiveEntry>> {
 
 fn chd_hash_entry(path: &Path, entry_name: &str) -> AppResult<HashResult> {
     if entry_name != chd_entry_name(path) {
-        return Err(AppError::Scan(format!("entry '{entry_name}' not found in CHD image")));
+        return Err(AppError::Scan(format!(
+            "entry '{entry_name}' not found in CHD image"
+        )));
     }
     let extracted = chd_extract_to_temp(path)?;
     let file = std::fs::File::open(&extracted).map_err(AppError::Io)?;
@@ -222,7 +233,9 @@ fn chd_hash_entry(path: &Path, entry_name: &str) -> AppResult<HashResult> {
 
 fn chd_extract_entry(path: &Path, entry_name: &str, dest: &mut dyn Write) -> AppResult<u64> {
     if entry_name != chd_entry_name(path) {
-        return Err(AppError::Scan(format!("entry '{entry_name}' not found in CHD image")));
+        return Err(AppError::Scan(format!(
+            "entry '{entry_name}' not found in CHD image"
+        )));
     }
     let extracted = chd_extract_to_temp(path)?;
     let result = (|| {
@@ -263,7 +276,11 @@ pub fn list_entries(path: &Path, kind: ArchiveKind) -> AppResult<Vec<ArchiveEntr
                 let entry = entry.map_err(AppError::Io)?;
                 if entry.header().entry_type().is_file() {
                     entries.push(ArchiveEntry {
-                        name: entry.path().map_err(AppError::Io)?.to_string_lossy().to_string(),
+                        name: entry
+                            .path()
+                            .map_err(AppError::Io)?
+                            .to_string_lossy()
+                            .to_string(),
                         size: entry.header().size().unwrap_or(0),
                     });
                 }
@@ -295,9 +312,9 @@ pub fn hash_entry(path: &Path, kind: ArchiveKind, entry_name: &str) -> AppResult
             let file = std::fs::File::open(path).map_err(AppError::Io)?;
             let mut archive = zip::ZipArchive::new(file)
                 .map_err(|e| AppError::Scan(format!("invalid ZIP archive: {e}")))?;
-            let entry = archive
-                .by_name(entry_name)
-                .map_err(|e| AppError::Scan(format!("cannot read ZIP entry '{entry_name}': {e}")))?;
+            let entry = archive.by_name(entry_name).map_err(|e| {
+                AppError::Scan(format!("cannot read ZIP entry '{entry_name}': {e}"))
+            })?;
             compute_hashes(entry)
         }
         ArchiveKind::Tar => {
@@ -305,7 +322,11 @@ pub fn hash_entry(path: &Path, kind: ArchiveKind, entry_name: &str) -> AppResult
             let mut archive = tar::Archive::new(file);
             for entry in archive.entries().map_err(AppError::Io)? {
                 let entry = entry.map_err(AppError::Io)?;
-                let name = entry.path().map_err(AppError::Io)?.to_string_lossy().to_string();
+                let name = entry
+                    .path()
+                    .map_err(AppError::Io)?
+                    .to_string_lossy()
+                    .to_string();
                 if name == entry_name {
                     return compute_hashes(entry);
                 }
@@ -359,9 +380,9 @@ pub fn extract_entry(
             let file = std::fs::File::open(path).map_err(AppError::Io)?;
             let mut archive = zip::ZipArchive::new(file)
                 .map_err(|e| AppError::Scan(format!("invalid ZIP archive: {e}")))?;
-            let mut entry = archive
-                .by_name(entry_name)
-                .map_err(|e| AppError::Scan(format!("cannot read ZIP entry '{entry_name}': {e}")))?;
+            let mut entry = archive.by_name(entry_name).map_err(|e| {
+                AppError::Scan(format!("cannot read ZIP entry '{entry_name}': {e}"))
+            })?;
             std::io::copy(&mut entry, dest).map_err(AppError::Io)
         }
         ArchiveKind::Tar => {
@@ -369,7 +390,11 @@ pub fn extract_entry(
             let mut archive = tar::Archive::new(file);
             for entry in archive.entries().map_err(AppError::Io)? {
                 let mut entry = entry.map_err(AppError::Io)?;
-                let name = entry.path().map_err(AppError::Io)?.to_string_lossy().to_string();
+                let name = entry
+                    .path()
+                    .map_err(AppError::Io)?
+                    .to_string_lossy()
+                    .to_string();
                 if name == entry_name {
                     return std::io::copy(&mut entry, dest).map_err(AppError::Io);
                 }
@@ -442,7 +467,8 @@ mod tests {
 
     #[test]
     fn detects_plain_file_as_none() {
-        let dir = std::env::temp_dir().join(format!("rt26-archive-test-plain-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-archive-test-plain-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("plain.bin");
         std::fs::write(&path, b"not an archive").unwrap();
@@ -462,7 +488,8 @@ mod tests {
             return;
         };
 
-        let dir = std::env::temp_dir().join(format!("rt26-chd-archive-test-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-chd-archive-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let input_path = dir.join("input.bin");
         let payload: Vec<u8> = (0..65536u32).map(|i| (i % 251) as u8).collect();
@@ -479,7 +506,11 @@ mod tests {
             .arg("512")
             .output()
             .unwrap();
-        assert!(create_output.status.success(), "chdman createraw failed: {}", String::from_utf8_lossy(&create_output.stderr));
+        assert!(
+            create_output.status.success(),
+            "chdman createraw failed: {}",
+            String::from_utf8_lossy(&create_output.stderr)
+        );
 
         let kind = detect_archive_kind(&chd_path).unwrap();
         assert_eq!(kind, ArchiveKind::Chd);
@@ -515,7 +546,8 @@ mod tests {
             return;
         }
 
-        let dir = std::env::temp_dir().join(format!("rt26-rar-archive-test-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("rt26-rar-archive-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let fake_rar = dir.join("corrupt.rar");
         let mut content = b"Rar!\x1A\x07\x00".to_vec();
