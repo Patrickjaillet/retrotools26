@@ -1,45 +1,105 @@
+<div align="center">
+
 # Retro Tools 2026
 
-A professional-grade 1G1R (1 Game 1 ROM) manager for retro game collections, built in Rust with a native egui/eframe interface. Designed to be the most complete, most polished 1G1R tool available, and built from the ground up to grow into a broader retrogaming toolset.
+**The complete 1G1R collection manager for retro gaming.**
+
+Scan, curate and build a clean "1 Game 1 ROM" collection from your DAT-cataloged ROMs — then export it straight to Batocera, Recalbox, Lakka or EmulationStation, with shaders, controller profiles, box art and RetroAchievements along for the ride.
+
+[Download the latest release](https://github.com/Patrickjaillet/retrotools26/releases/latest) · [Website](https://patrickjaillet.github.io/retrotools26)
+
+</div>
+
+---
+
+## What it does
+
+Retro Tools 2026 takes a folder of ROMs and a DAT file (No-Intro, Redump, TOSEC) and gives you back exactly one clean copy of each game — the region and language you asked for, duplicates and bad dumps set aside, nothing guessed. Every step is visible and reversible: preview the selection before anything moves, undo any build afterward.
+
+Beyond the core 1G1R engine, it grows into a full retro gaming toolkit: metadata and box art, save backups, controller profiles, RetroArch shaders, core compatibility notes, disc format conversion, SD/USB card imaging, and RetroAchievements — each one optional, each one off until you turn it on.
 
 ![Dashboard](docs/screenshot1.png)
-![1G1R Builder](docs/screenshot2.png)
 
-## Features
+## A closer look
 
-- Fast, multi-threaded DAT parsing (No-Intro, Redump, TOSEC, MAME/Logiqx formats)
-- Multi-threaded ROM scanning with CRC32 / MD5 / SHA1 / SHA256 hashing, including inside ZIP / 7Z / RAR / CHD archives
-- Configurable 1G1R rule engine (region priority, language priority, revision handling, Beta/Proto/Demo/Unlicensed filtering)
-- Safe, reversible file operations (copy, move, symlink/hardlink builds) with dry-run mode and undo history
-- Modern native desktop UI with light/dark/system themes and a customizable accent color
-- Plugin-ready architecture for future retrogaming modules (media scraping, playlists, RetroAchievements, BIOS management, format conversion)
-- Command-line interface for automation and scripting, alongside the graphical application
+<table>
+<tr>
+<td width="50%">
 
-## Getting Started
+**Browse and inspect your collection**
 
-See [`docs/COMPILATION.md`](docs/COMPILATION.md) for build instructions.
+Every game at a glance — region, language, size, scan status — with full detail on demand: ROM files, hashes, recommended emulator core, RetroAchievements compatibility.
 
-```bash
-git clone https://github.com/Patrickjaillet/retrotools26.git
-cd retrotools26
-cargo build --release
-```
+</td>
+<td width="50%">
 
-The graphical application binary is `retrotools2026`, and the command-line tool is `retrotools-cli`.
+![Games view](docs/screenshot2.png)
 
-## Project Status
+</td>
+</tr>
+<tr>
+<td width="50%">
 
-Retro Tools 2026 is under active development. See [`docs/CHANGELOG.md`](docs/CHANGELOG.md) for release history.
+**Manage every platform in one place**
 
-## Contributing
+Import a DAT, see it listed with its type, version and game count. Missing a DAT for one of your ROM folders? The app finds the gap and offers to fetch it.
 
-Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a pull request, and review the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+</td>
+<td width="50%">
+
+![Platforms view](docs/screenshot3.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Full control over the 1G1R rules**
+
+Region and language priority, parent-vs-clone preference, Beta/Proto/Demo/Unlicensed filtering, an optional RetroAchievements-aware tie-break — preview the result before building anything.
+
+</td>
+<td width="50%">
+
+![1G1R rule builder](docs/screenshot4.png)
+
+</td>
+</tr>
+</table>
+
+## Everything included
+
+**Core 1G1R engine**
+- No-Intro / Redump / TOSEC / MAME DAT parsing
+- Multi-threaded scanning and hashing (CRC32/MD5/SHA1/SHA256), including inside ZIP/7Z/RAR/CHD archives
+- Configurable region/language priority, revision handling, Beta/Proto/Demo/Unlicensed/Pirate/Bad-Dump filtering
+- Preview before you build, full undo history after
+- Copy, move, or space-saving symlink/hardlink builds
+
+**Retro ecosystem modules** (each inactive until you turn it on)
+- Export a finished set straight into a Batocera/Recalbox/Lakka `roms/` folder, with `es_systems.cfg` merged in
+- Box art, screenshots and metadata from ScreenScraper.fr, plus smart ES-DE collections by region/language/genre/year
+- Save file & save state backup and restore, fully undoable
+- A personal library of RetroArch controller profiles, synced to any device in one pass
+- RetroArch shader presets (CRT, scanlines, pixel-art upscalers), assigned per core or per game
+- A local core-compatibility advisor flagging which libretro core each game actually needs
+- CHD / RVZ / CSO disc image conversion
+- SD/USB card imaging with checksum verification and a double-confirmation safety gate before any destructive write
+- RetroAchievements-aware: know which of your ROMs are known-compatible before you build
+
+**The essentials**
+- Native Windows desktop app (egui) plus a full command-line interface for scripting
+- Light/dark/system themes, adjustable UI scale, English/French
+- Works fully offline — no account, no telemetry; every third-party credential is yours alone, stored encrypted, never bundled
+- Portable mode: run it off a USB stick with zero installation
+
+## Download
+
+Grab the installer or the portable build from the [latest release](https://github.com/Patrickjaillet/retrotools26/releases/latest). Building from source? See [`docs/COMPILATION.md`](docs/COMPILATION.md).
 
 ## License
 
 Retro Tools 2026 is distributed under the [MIT License](LICENSE).
 
 Copyright © 2026 Patrick JAILLET — All rights reserved
-Contact: sandefjord.development@proton.me
-Website: https://patrickjaillet.github.io/retrotools26
-Repository: https://github.com/Patrickjaillet/retrotools26
+Contact: sandefjord.development@proton.me · [Website](https://patrickjaillet.github.io/retrotools26) · [Repository](https://github.com/Patrickjaillet/retrotools26)

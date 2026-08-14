@@ -7,7 +7,7 @@
 /// without the trademark holder's permission, regardless of this project's
 /// own license. A deterministic, generated badge sidesteps both problems:
 /// it works for any platform name and carries no licensing risk.
-use egui::{Color32, RichText, Rounding, Ui};
+use egui::{Color32, Rounding, Ui};
 
 fn fnv1a(name: &str) -> u32 {
     let mut hash: u32 = 2_166_136_261;
@@ -97,22 +97,23 @@ pub fn badge_initials(name: &str) -> String {
 }
 
 /// Draws a `size`x`size` circular badge for `name` at the current cursor
-/// position.
+/// position. Allocates exactly `size`x`size` via the painter (the same
+/// approach `shader_preview::draw` uses) rather than a `Frame` +
+/// `centered_and_justified`, which claims all *available* space in its
+/// parent `Ui` — harmless in a plain vertical layout, but inside an
+/// `egui::Grid` cell that available space can be the entire row width,
+/// stretching the badge into a full-width bar instead of a small circle.
 pub fn draw(ui: &mut Ui, name: &str, size: f32) {
-    egui::Frame::none()
-        .fill(badge_color(name))
-        .rounding(Rounding::same(size / 2.0))
-        .show(ui, |ui| {
-            ui.set_min_size(egui::vec2(size, size));
-            ui.centered_and_justified(|ui| {
-                ui.label(
-                    RichText::new(badge_initials(name))
-                        .color(Color32::WHITE)
-                        .strong()
-                        .size(size * 0.32),
-                );
-            });
-        });
+    let (response, painter) = ui.allocate_painter(egui::vec2(size, size), egui::Sense::hover());
+    let rect = response.rect;
+    painter.rect_filled(rect, Rounding::same(size / 2.0), badge_color(name));
+    painter.text(
+        rect.center(),
+        egui::Align2::CENTER_CENTER,
+        badge_initials(name),
+        egui::FontId::proportional(size * 0.32),
+        Color32::WHITE,
+    );
 }
 
 #[cfg(test)]

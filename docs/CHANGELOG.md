@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+- `platform_badge::draw` used `centered_and_justified`, which claims all *available* space in its parent `Ui` — harmless in a plain vertical layout, but it stretched the badge into a full-width colored bar wherever it sat inside an `egui::Grid` cell (Platforms tab) or next to a heading (Dashboard, Games), discovered while taking real screenshots for the README. Now allocates its exact size via the `Painter`, same approach as `shader_preview::draw`.
+
+### Changed
+- `README.md` rewritten as a pure end-user showcase (what the app does, not how to build it) with 4 real screenshots (Dashboard, Games, Platforms, 1G1R Builder), replacing the previous 2-screenshot version with build-instructions front and center.
+
 ## [0.1.4] - 2026-08-14
 
 ### Fixed
