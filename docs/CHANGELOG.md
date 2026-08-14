@@ -6,8 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-08-14
+
 ### Fixed
 - Games tab Grid view: two rendering bugs found via a real user report (34410 games, TOSEC Amiga DAT). The status tile on each card used `Frame` + `centered_and_justified` (same bug as `platform_badge::draw`, fixed the same way — exact-size `Painter` allocation). Separately, `horizontal_wrapped` inside the `ScrollArea` nested in the grid's half-width column was wrapping against the whole window's width instead of the constrained column width, so cards kept flowing past the column boundary and under the details panel instead of wrapping; replaced with explicit row-chunking based on a freshly measured `ui.available_width()`.
+- Landing page download buttons pointed at the old v0.1.0 release assets — never updated across the v0.1.1-v0.1.4 releases. Now point at the current release.
 
 ## [0.1.5] - 2026-08-14
 
