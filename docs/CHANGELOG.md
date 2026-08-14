@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+- Dashboard, Platforms, Plugins, Settings, Download and About tabs now scroll (each wrapped in its own `egui::ScrollArea::vertical()`) — on a small or restored-from-minimized window, content past the bottom of the visible area was previously unreachable with no scrollbar; the Games and 1G1R tabs already had their own internal scrolling and are unaffected
+
 ### Added
 - New "Download" tab (`crates/ui/src/views/download.rs`): official/community links for everything this app works with but doesn't bundle — DAT sources (No-Intro, Redump, TOSEC), frontends/distributions (Batocera, Recalbox, Lakka, EmulationStation-DE), RetroArch cores and shaders, RetroAchievements account creation, and the third-party RVZ/CSO conversion tools; deliberately excludes ROM download sites, with a visible note explaining why — this app manages ROMs you already own, it doesn't point at copyright-infringing sources
 

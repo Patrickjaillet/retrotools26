@@ -2,6 +2,7 @@ use egui::{RichText, Ui};
 use retrotools_common::current_version;
 
 pub fn show(ui: &mut Ui) {
+    egui::ScrollArea::vertical().id_source("about_scroll").auto_shrink([false, false]).show(ui, |ui| {
     ui.heading("About Retro Tools 2026");
     ui.add_space(16.0);
 
@@ -50,4 +51,5 @@ pub fn show(ui: &mut Ui) {
     ui.separator();
     ui.add_space(12.0);
     ui.label(RichText::new("Built with Rust and egui.").weak());
+    });
 }

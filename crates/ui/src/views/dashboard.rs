@@ -3,6 +3,7 @@ use crate::state::AppState;
 use egui::{RichText, Ui};
 
 pub fn show(ui: &mut Ui, state: &AppState) {
+    egui::ScrollArea::vertical().id_source("dashboard_scroll").auto_shrink([false, false]).show(ui, |ui| {
     ui.heading(state.t(Key::DashboardTitle));
     ui.add_space(12.0);
 
@@ -71,6 +72,7 @@ pub fn show(ui: &mut Ui, state: &AppState) {
             });
         }
     }
+    });
 }
 
 fn stat_card(ui: &mut Ui, label: &str, value: &str) {

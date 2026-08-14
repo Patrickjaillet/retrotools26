@@ -56,6 +56,7 @@ const SECTIONS: &[Section] = &[
 ];
 
 pub fn show(ui: &mut Ui) {
+    egui::ScrollArea::vertical().id_source("download_scroll").auto_shrink([false, false]).show(ui, |ui| {
     ui.heading("Download");
     ui.add_space(8.0);
     ui.label(
@@ -94,6 +95,7 @@ pub fn show(ui: &mut Ui) {
         });
         ui.add_space(6.0);
     }
+    });
 }
 
 #[cfg(test)]

@@ -2,6 +2,7 @@ use crate::state::AppState;
 use egui::{RichText, Ui};
 
 pub fn show(ui: &mut Ui, state: &mut AppState) {
+    egui::ScrollArea::vertical().id_source("plugins_scroll").auto_shrink([false, false]).show(ui, |ui| {
     ui.heading("Plugins");
     ui.add_space(8.0);
     ui.label(
@@ -81,4 +82,5 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
         });
         ui.add_space(8.0);
     }
+    });
 }

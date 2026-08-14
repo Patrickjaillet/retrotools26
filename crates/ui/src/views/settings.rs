@@ -4,6 +4,7 @@ use egui::{RichText, Ui};
 use retrotools_common::config::ThemePreference;
 
 pub fn show(ui: &mut Ui, state: &mut AppState) {
+    egui::ScrollArea::vertical().id_source("settings_scroll").auto_shrink([false, false]).show(ui, |ui| {
     ui.heading(state.t(Key::SettingsTitle));
     ui.add_space(12.0);
 
@@ -416,4 +417,5 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
             Err(err) => state.toast(ToastKind::Error, format!("Cannot save settings: {err}")),
         }
     }
+    });
 }

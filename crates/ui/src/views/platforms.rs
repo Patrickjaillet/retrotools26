@@ -2,6 +2,7 @@ use crate::state::AppState;
 use egui::{RichText, Ui};
 
 pub fn show(ui: &mut Ui, state: &mut AppState) {
+    egui::ScrollArea::vertical().id_source("platforms_scroll").auto_shrink([false, false]).show(ui, |ui| {
     ui.horizontal(|ui| {
         ui.heading("Platforms");
         ui.add_space(12.0);
@@ -83,6 +84,7 @@ pub fn show(ui: &mut Ui, state: &mut AppState) {
                 ui.end_row();
             }
         });
+    });
 }
 
 fn missing_dats_section(ui: &mut Ui, state: &mut AppState) {
