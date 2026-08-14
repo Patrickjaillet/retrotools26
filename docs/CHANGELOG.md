@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-08-14
+
 ### Fixed
 - Dashboard, Platforms, Plugins, Settings, Download and About tabs now scroll (each wrapped in its own `egui::ScrollArea::vertical()`) — on a small or restored-from-minimized window, content past the bottom of the visible area was previously unreachable with no scrollbar; the Games and 1G1R tabs already had their own internal scrolling and are unaffected
 

@@ -10,7 +10,7 @@
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$version = "0.1.2"
+$version = "0.1.3"
 $stageDir = Join-Path $repoRoot "packaging\output\RetroTools2026-Portable-$version"
 $zipPath = Join-Path $repoRoot "packaging\output\RetroTools2026-Portable-$version.zip"
 
