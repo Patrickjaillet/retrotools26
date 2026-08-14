@@ -274,55 +274,83 @@ fn show_list(ui: &mut Ui, state: &mut AppState, filtered: &[&Game]) {
 /// scraper exists without any other change.
 fn show_grid(ui: &mut Ui, state: &mut AppState, filtered: &[&Game]) {
     const CARD_WIDTH: f32 = 180.0;
+    const CARD_SPACING: f32 = 8.0;
 
-    ui.horizontal_wrapped(|ui| {
-        for game in filtered {
-            let selected = state.selected_game.as_deref() == Some(game.name.as_str());
-            let status = state.game_scan_status(&game.name);
-            let (status_text, status_color) = status_label(status);
+    // Explicit row-chunking based on the actual measured available width,
+    // rather than `horizontal_wrapped`'s automatic wrapping — inside a
+    // `ScrollArea` nested in an `egui::Ui::columns` cell, `horizontal_wrapped`
+    // was measuring the *whole window's* width rather than the constrained
+    // half-width column, so cards kept flowing past the column boundary and
+    // underneath the details panel on the right instead of wrapping.
+    let available_width = ui.available_width();
+    let cards_per_row =
+        (((available_width + CARD_SPACING) / (CARD_WIDTH + CARD_SPACING)).floor() as usize).max(1);
 
-            let frame = egui::Frame::group(ui.style())
-                .rounding(egui::Rounding::same(8.0))
-                .inner_margin(egui::Margin::same(10.0))
-                .fill(if selected {
-                    ui.visuals().selection.bg_fill.linear_multiply(0.35)
-                } else {
-                    ui.visuals().extreme_bg_color
-                });
-
-            let response = frame.show(ui, |ui| {
-                ui.set_width(CARD_WIDTH);
-                ui.vertical(|ui| {
-                    ui.add(egui::widgets::Separator::default().spacing(0.0).grow(0.0));
-                    egui::Frame::none()
-                        .fill(status_color.linear_multiply(0.5))
-                        .rounding(egui::Rounding::same(6.0))
-                        .show(ui, |ui| {
-                            ui.set_min_size(egui::vec2(CARD_WIDTH - 20.0, 60.0));
-                            ui.centered_and_justified(|ui| {
-                                ui.label(RichText::new(status_text).color(Color32::WHITE).strong());
-                            });
-                        });
-                    ui.add_space(6.0);
-                    ui.label(RichText::new(&game.name).strong().small());
-                    if let Some(region) = game.regions.first() {
-                        ui.label(RichText::new(&region.0).weak().small());
-                    }
-                    if let Some(true) = state.is_kept(&game.name) {
-                        ui.label(
-                            RichText::new("KEPT")
-                                .small()
-                                .color(Color32::from_rgb(76, 175, 80)),
-                        );
-                    }
-                });
-            });
-
-            if response.response.interact(egui::Sense::click()).clicked() {
-                state.selected_game = Some(game.name.clone());
+    for chunk in filtered.chunks(cards_per_row) {
+        ui.horizontal(|ui| {
+            for game in chunk {
+                show_game_card(ui, state, game, CARD_WIDTH);
             }
-        }
+        });
+    }
+}
+
+fn show_game_card(ui: &mut Ui, state: &mut AppState, game: &Game, card_width: f32) {
+    let selected = state.selected_game.as_deref() == Some(game.name.as_str());
+    let status = state.game_scan_status(&game.name);
+    let (status_text, status_color) = status_label(status);
+
+    let frame = egui::Frame::group(ui.style())
+        .rounding(egui::Rounding::same(8.0))
+        .inner_margin(egui::Margin::same(10.0))
+        .fill(if selected {
+            ui.visuals().selection.bg_fill.linear_multiply(0.35)
+        } else {
+            ui.visuals().extreme_bg_color
+        });
+
+    let response = frame.show(ui, |ui| {
+        ui.set_width(card_width);
+        ui.vertical(|ui| {
+            ui.add(egui::widgets::Separator::default().spacing(0.0).grow(0.0));
+            // Allocates its exact size via the painter rather than `Frame` +
+            // `centered_and_justified` — the latter claims all *available*
+            // space in its parent `Ui`, which stretched this tile (and the
+            // whole card) into a full-width bar overlapping neighboring
+            // cards on large game lists (see `platform_badge::draw` for the
+            // same bug, hit first).
+            let (tile_rect, _) =
+                ui.allocate_exact_size(egui::vec2(card_width - 20.0, 60.0), egui::Sense::hover());
+            ui.painter().rect_filled(
+                tile_rect,
+                egui::Rounding::same(6.0),
+                status_color.linear_multiply(0.5),
+            );
+            ui.painter().text(
+                tile_rect.center(),
+                egui::Align2::CENTER_CENTER,
+                status_text,
+                egui::FontId::proportional(14.0),
+                Color32::WHITE,
+            );
+            ui.add_space(6.0);
+            ui.label(RichText::new(&game.name).strong().small());
+            if let Some(region) = game.regions.first() {
+                ui.label(RichText::new(&region.0).weak().small());
+            }
+            if let Some(true) = state.is_kept(&game.name) {
+                ui.label(
+                    RichText::new("KEPT")
+                        .small()
+                        .color(Color32::from_rgb(76, 175, 80)),
+                );
+            }
+        });
     });
+
+    if response.response.interact(egui::Sense::click()).clicked() {
+        state.selected_game = Some(game.name.clone());
+    }
 }
 
 fn show_details(
