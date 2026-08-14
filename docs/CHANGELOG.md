@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-08-14
+
+### Fixed
+- Games tab Grid view still overlapped the details panel with a large game list after the v0.1.6 fix: the per-row card count calculation counted only each card's content width (180px), not its rendered width including the card frame's inner margin (10px each side) — one card too many fit in the calculation and still overflowed the column. Now uses the full rendered card width and the real item spacing read from `ui.spacing()` instead of a guessed constant; verified with a 200-game scrollable list.
+
 ## [0.1.6] - 2026-08-14
 
 ### Fixed

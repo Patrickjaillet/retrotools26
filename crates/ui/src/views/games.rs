@@ -274,7 +274,16 @@ fn show_list(ui: &mut Ui, state: &mut AppState, filtered: &[&Game]) {
 /// scraper exists without any other change.
 fn show_grid(ui: &mut Ui, state: &mut AppState, filtered: &[&Game]) {
     const CARD_WIDTH: f32 = 180.0;
-    const CARD_SPACING: f32 = 8.0;
+    // Must match `show_game_card`'s `Frame::group(..).inner_margin(..)`
+    // below — the frame's *rendered* width is `CARD_WIDTH` plus this margin
+    // on both sides, not `CARD_WIDTH` alone. The row-width math has to use
+    // the full rendered size or it under-counts each card's footprint and
+    // packs one too many per row, which then overflows into the details
+    // column on the right (found via a real 34410-game list, where the
+    // extra ~20px per card that a small test list didn't make visible
+    // added up to a real overlap).
+    const CARD_FRAME_MARGIN: f32 = 10.0;
+    const CARD_RENDERED_WIDTH: f32 = CARD_WIDTH + 2.0 * CARD_FRAME_MARGIN;
 
     // Explicit row-chunking based on the actual measured available width,
     // rather than `horizontal_wrapped`'s automatic wrapping — inside a
@@ -282,9 +291,11 @@ fn show_grid(ui: &mut Ui, state: &mut AppState, filtered: &[&Game]) {
     // was measuring the *whole window's* width rather than the constrained
     // half-width column, so cards kept flowing past the column boundary and
     // underneath the details panel on the right instead of wrapping.
+    let item_spacing = ui.spacing().item_spacing.x;
+    let card_slot_width = CARD_RENDERED_WIDTH + item_spacing;
     let available_width = ui.available_width();
     let cards_per_row =
-        (((available_width + CARD_SPACING) / (CARD_WIDTH + CARD_SPACING)).floor() as usize).max(1);
+        (((available_width + item_spacing) / card_slot_width).floor() as usize).max(1);
 
     for chunk in filtered.chunks(cards_per_row) {
         ui.horizontal(|ui| {
